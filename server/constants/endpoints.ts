@@ -1,0 +1,30 @@
+// production backend URL
+export const API_BASE_URL = "http://localhost:8082";
+
+// WEBSOCKETS
+export const WEBSOCKET_BASE_URL = `${API_BASE_URL}/attendease-websocket`;
+
+// backend login controller endpoint
+export const LOGIN_ENDPOINT = `${API_BASE_URL}/api/auth/student/login`;
+
+// backend endpoint to retrieve ongoing events endpoint
+export const RETRIEVE_ONGOING_REGISTRATION_AND_ACTIVE_EVENTS = `${API_BASE_URL}/api/registration/events`;
+
+// backend endpoint to retrieve user profile endpoint
+export const RETRIEVE_USER_PROFILE = `${API_BASE_URL}/api/profile/me`;
+export const UPDATE_PASSWORD = `${API_BASE_URL}/api/profile/update-password`;
+
+export const GET_ATTENDANCE_HISTORY_ENDPOINT = `${API_BASE_URL}/api/attendance/history`;
+
+export const REGISTER_FACE = `${API_BASE_URL}/api/auth/biometrics/register-face-image`;
+
+export const REGISTER_STUDENT_ON_EVENT_ENDPOINT = `${API_BASE_URL}/api/registration`;
+
+export const PING_ATTENDANCE_ENDPOINT = `${API_BASE_URL}/api/registration/ping`;
+
+export const CHECK_CURRENT_LOCATION = `${API_BASE_URL}/api/registration/check-location`;
+
+export const GET_EVENT_BY_ID = (id: string) => `${API_BASE_URL}/api/registration/events/${id}`;
+
+// Retrieves the current state of an event.
+export const GET_EVENT_STATE_STATUS = (id: string) => `${API_BASE_URL}/api/registration/${id}/start-status`;

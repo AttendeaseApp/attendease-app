@@ -20,13 +20,17 @@
                 "backgroundColor": "#ffffff"
             },
             "edgeToEdgeEnabled": true,
-            "permissions": ["android.permission.CAMERA"],
-            "softwareKeyboardLayoutMode": "pan"
+            "permissions": ["android.permission.CAMERA", "android.permission.RECORD_AUDIO"],
+            "softwareKeyboardLayoutMode": "pan",
+            "package": "com.attendease.attendeasemobileapp"
         },
         "web": {
             "bundler": "metro",
             "output": "static",
-            "favicon": "./assets/images/favicon.png"
+            "favicon": "./assets/images/favicon.png",
+            "fonts": {
+                "timeout": 10000
+            }
         },
         "plugins": [
             "expo-router",

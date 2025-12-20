@@ -1,574 +1,534 @@
-import { Image, Pressable, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, View } from "react-native";
-import React from "react";
-import { useTheme } from "@/context/theme.context";
-import useUser from "@/hooks/fetch/useUser";
-import useUserData from "@/hooks/useUserData";
-import { LinearGradient } from "expo-linear-gradient";
-import { scale, verticalScale } from "react-native-size-matters";
-import { fontSizes, IsAndroid, IsHaveNotch, IsIPAD } from "@/themes/app.constant";
-import ThemeSwitcher from "@/components/common/theme.switcher";
-import { Feather, FontAwesome, Ionicons, MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
-import * as SecureStore from "expo-secure-store";
-import { router } from "expo-router";
-import * as WebBrowser from "expo-web-browser";
+import { IsHaveNotch, IsIPAD } from "@/themes/app.constant";
+import React, { useState, useRef, useEffect } from "react";
+import { StyleSheet, StatusBar, View, TouchableOpacity, Modal, Animated, Dimensions } from "react-native";
+import { verticalScale, scale, moderateScale } from "react-native-size-matters";
+import { ThemedText } from "@/components/ui/text/themed.text";
+import { getUserProfileDataService } from "@/server/service/api/profile/profile-service";
+import { UserStudentResponse } from "@/domain/interface/user/student/user-student.response";
+import { ActivityIndicator } from "react-native";
+import { logoutService } from "@/server/service/api/profile/logout-service";
+import { AlertDialog, AlertDialogBody, AlertDialogContent, AlertDialogFooter, AlertDialogHeader } from "@/components/ui/alert-dialog";
+import { Button, ButtonText, ButtonSpinner } from "@/components/ui/button";
+import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import AttendanceHistories from "@/components/profile/history/attendance.history.feed";
+
+const { width: screenWidth } = Dimensions.get("window");
 
 export default function ProfileScreen() {
-    const { theme } = useTheme();
-    const { user, loader } = useUser();
-    const { name, email, avatar } = useUserData();
+    const [profile, setProfile] = useState<UserStudentResponse | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
+    const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
+    const [isSuccessDialogOpen, setIsSuccessDialogOpen] = useState(false);
+    const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
+    const [isMoreInfoOpen, setIsMoreInfoOpen] = useState(false);
+    const router = useRouter();
+    const slideAnim = useRef(new Animated.Value(300)).current;
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const screenFadeAnim = useRef(new Animated.Value(0)).current;
+    const screenSlideAnim = useRef(new Animated.Value(20)).current;
+    const moreInfoSlideAnim = useRef(new Animated.Value(300)).current;
+    const moreInfoFadeAnim = useRef(new Animated.Value(0)).current;
 
-    const logoutHandler = async () => {
-        await SecureStore.deleteItemAsync("accessToken");
-        router.push("/(routes)/onboarding");
+    useEffect(() => {
+        getUserProfileDataService(setProfile, setLoading);
+        Animated.parallel([
+            Animated.timing(screenFadeAnim, {
+                toValue: 1,
+                duration: 400,
+                useNativeDriver: true,
+            }),
+            Animated.spring(screenSlideAnim, {
+                toValue: 0,
+                tension: 60,
+                friction: 8,
+                useNativeDriver: true,
+            }),
+        ]).start();
+    }, []);
+
+    useEffect(() => {
+        if (isSettingsMenuOpen) {
+            Animated.parallel([
+                Animated.timing(fadeAnim, {
+                    toValue: 1,
+                    duration: 250,
+                    useNativeDriver: true,
+                }),
+                Animated.spring(slideAnim, {
+                    toValue: 0,
+                    tension: 65,
+                    friction: 9,
+                    useNativeDriver: true,
+                }),
+            ]).start();
+        } else {
+            // Animate out
+            Animated.parallel([
+                Animated.timing(fadeAnim, {
+                    toValue: 0,
+                    duration: 200,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(slideAnim, {
+                    toValue: 300,
+                    duration: 200,
+                    useNativeDriver: true,
+                }),
+            ]).start();
+        }
+    }, [isSettingsMenuOpen]);
+
+    useEffect(() => {
+        if (isMoreInfoOpen) {
+            Animated.parallel([
+                Animated.timing(moreInfoFadeAnim, {
+                    toValue: 1,
+                    duration: 250,
+                    useNativeDriver: true,
+                }),
+                Animated.spring(moreInfoSlideAnim, {
+                    toValue: 0,
+                    tension: 65,
+                    friction: 9,
+                    useNativeDriver: true,
+                }),
+            ]).start();
+        } else {
+            // Animate out
+            Animated.parallel([
+                Animated.timing(moreInfoFadeAnim, {
+                    toValue: 0,
+                    duration: 200,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(moreInfoSlideAnim, {
+                    toValue: 300,
+                    duration: 200,
+                    useNativeDriver: true,
+                }),
+            ]).start();
+        }
+    }, [isMoreInfoOpen]);
+
+    const handleLogout = () => {
+        setIsSettingsMenuOpen(false);
+        setIsLogoutDialogOpen(true);
     };
 
+    const handleAccountSettings = () => {
+        setIsSettingsMenuOpen(false);
+        setTimeout(() => {
+            router.push("/(routes)/(account)/settings");
+        }, 150);
+    };
+
+    const handleMoreInfo = () => {
+        setIsMoreInfoOpen(true);
+    };
+
+    const confirmLogout = async () => {
+        setIsLogoutDialogOpen(false);
+        setIsLoggingOut(true);
+        try {
+            await logoutService();
+            setIsSuccessDialogOpen(true);
+        } catch (error) {
+            console.error("Logout error:", error);
+            alert("Logout Issue");
+        } finally {
+            setIsLoggingOut(false);
+        }
+    };
+
+    const cancelLogout = () => {
+        setIsLogoutDialogOpen(false);
+    };
+
+    const handleSuccessOK = () => {
+        setIsSuccessDialogOpen(false);
+        Animated.parallel([
+            Animated.timing(screenFadeAnim, {
+                toValue: 0,
+                duration: 200,
+                useNativeDriver: true,
+            }),
+            Animated.timing(screenSlideAnim, {
+                toValue: -20,
+                duration: 200,
+                useNativeDriver: true,
+            }),
+        ]).start(() => {
+            router.replace("/(routes)/login");
+        });
+    };
+
+    if (loading) {
+        return (
+            <View style={styles.centerWrapper}>
+                <ActivityIndicator size="large" color="#27548A" />
+            </View>
+        );
+    }
+
+    if (!profile) {
+        return (
+            <View style={styles.centerWrapper}>
+                <ThemedText type="title">Failed to load profile.</ThemedText>
+                <Button action="primary" variant="solid" size="md" onPress={() => getUserProfileDataService(setProfile, setLoading)} style={{ marginTop: 20 }}>
+                    <ButtonText>Retry</ButtonText>
+                </Button>
+            </View>
+        );
+    }
+
+    const { firstName, lastName, userType, createdAt, updatedAt, studentNumber, course, section, cluster, biometricStatus, biometricCreatedAt, biometricLastUpdated } = profile;
+
     return (
-        <View
-            style={[
-                styles.container,
-                {
-                    backgroundColor: theme.dark ? "#101010" : "#f5f5f5",
-                },
-            ]}
+        <Animated.View
+            style={{
+                flex: 1,
+                opacity: screenFadeAnim,
+                transform: [{ translateY: screenSlideAnim }],
+            }}
         >
-            <LinearGradient
-                colors={theme.dark ? ["#121121", "#3c43485c", "#121121"] : ["#6248FF", "#8673FC"]}
-                start={theme.dark ? { x: 1, y: 1 } : { x: 0, y: 1 }}
-                end={theme.dark ? { x: 0, y: 1 } : { x: 0, y: 0 }}
-                style={styles.header}
-            >
-                <StatusBar barStyle={"light-content"} />
-                <SafeAreaView style={{ paddingTop: IsAndroid ? verticalScale(20) : 0 }}>
-                    <View style={styles.headerContent}>
-                        <Text style={styles.headerTitle}>Profile</Text>
-                        <View>
-                            <ThemeSwitcher />
+            <View style={styles.headerContainer}>
+                <StatusBar barStyle="light-content" />
+                <View style={styles.contentWrapper}>
+                    <View style={styles.profileSection}>
+                        <View style={styles.profileInfo}>
+                            <ThemedText type="title">
+                                {firstName} {lastName}
+                            </ThemedText>
+                            <View>
+                                <View style={styles.infoRow}>
+                                    <View>
+                                        <ThemedText type="default" style={styles.infoText} numberOfLines={1}>
+                                            {userType}
+                                        </ThemedText>
+                                    </View>
+                                </View>
+                                <View style={styles.infoRow}>
+                                    <View>
+                                        <ThemedText type="default" style={styles.infoText} numberOfLines={1}>
+                                            {studentNumber || "Student Number Unavailable"}
+                                        </ThemedText>
+                                    </View>
+                                </View>
+                                <View style={styles.infoRow}>
+                                    <View>
+                                        <ThemedText type="default" style={styles.infoText} numberOfLines={1}>
+                                            {course || "Course Unavailable"} | {section || "Section Unavailable"} | {cluster || "Cluster Unavailable"}
+                                        </ThemedText>
+                                    </View>
+                                </View>
+                                <View style={styles.infoRow}>
+                                    <View>
+                                        <ThemedText type="default" style={styles.infoText} numberOfLines={1}>
+                                            Biometrics: {biometricStatus || "Unavailable"}
+                                        </ThemedText>
+                                    </View>
+                                </View>
+                            </View>
+                        </View>
+                        <View style={styles.actionButtons}>
+                            <TouchableOpacity style={styles.actionButton} onPress={handleMoreInfo}>
+                                <Ionicons name="information-circle-outline" size={moderateScale(24)} color="#6B7280" />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.settingsButton} onPress={() => setIsSettingsMenuOpen(true)}>
+                                <Ionicons name="options-outline" size={moderateScale(24)} color="#6B7280" />
+                            </TouchableOpacity>
                         </View>
                     </View>
-                </SafeAreaView>
-            </LinearGradient>
+                </View>
 
-            {/* Profile wrapper */}
-            <View
-                style={[
-                    styles.profileWrapper,
-                    {
-                        backgroundColor: theme.dark ? "#121121" : "#fff",
-                        shadowOpacity: theme.dark ? 0.12 : 0.25,
-                    },
-                ]}
-            >
-                <View style={{ flexDirection: "row" }}>
-                    {avatar && <Image source={{ uri: avatar }} style={styles.profileImage} />}
-                    <View style={styles.profileTextContainer}>
-                        <Text
+                {/* More Info Modal */}
+                <Modal visible={isMoreInfoOpen} transparent={true} animationType="none" onRequestClose={() => setIsMoreInfoOpen(false)}>
+                    <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setIsMoreInfoOpen(false)}>
+                        <Animated.View
                             style={[
-                                styles.profileName,
+                                styles.modalOverlayBackground,
                                 {
-                                    color: theme.dark ? "#fff" : "#000",
+                                    opacity: moreInfoFadeAnim,
                                 },
                             ]}
-                        >
-                            {name}
-                        </Text>
-                        <Text style={styles.profileTitle}>{email}</Text>
-                    </View>
-                </View>
-                <View style={styles.statsContainer}>
-                    <LinearGradient style={styles.statBox} colors={["#01CED3", "#0185F7"]} start={{ x: 0, y: 1 }} end={{ x: 1, y: 0 }}>
-                        <Text style={styles.statNumber}>{user?.orders?.length}</Text>
-                        <Text style={styles.statLabel}>Enrolled</Text>
-                    </LinearGradient>
-                    <LinearGradient style={styles.statBox} colors={["#BF6FF8", "#3C1BE9"]} start={{ x: 0, y: 1 }} end={{ x: 1, y: 0 }}>
-                        <Text style={styles.statNumber}>0</Text>
-                        <Text style={styles.statLabel}>Certificates</Text>
-                    </LinearGradient>
-                </View>
-            </View>
-
-            {/* Profile options */}
-            <ScrollView showsVerticalScrollIndicator={false} style={{ padding: scale(20) }}>
-                <Pressable
-                    style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        marginBottom: verticalScale(20),
-                    }}
-                    onPress={() =>
-                        router.push({
-                            pathname: "/(routes)/enrolled-courses",
-                            params: { courses: JSON.stringify(user?.orders) },
-                        })
-                    }
-                >
-                    <View style={{ flexDirection: "row", alignItems: "center" }}>
-                        <View
-                            style={{
-                                width: scale(38),
-                                height: scale(38),
-                                justifyContent: "center",
-                                alignItems: "center",
-                                borderRadius: scale(10),
-                                borderWidth: 1,
-                                borderColor: "#E2DDFF",
-                            }}
-                        >
-                            <Feather name="book-open" size={scale(21)} color={theme.dark ? "#fff" : "#0047AB"} />
+                        />
+                    </TouchableOpacity>
+                    <Animated.View
+                        style={[
+                            styles.moreInfoMenu,
+                            {
+                                transform: [{ translateY: moreInfoSlideAnim }],
+                            },
+                        ]}
+                    >
+                        <View style={styles.menuHeader}>
+                            <ThemedText type="subtitle" style={styles.menuTitle}>
+                                ACCOUNT INFO
+                            </ThemedText>
+                            <TouchableOpacity onPress={() => setIsMoreInfoOpen(false)}>
+                                <Ionicons name="close" size={24} color="#111827" />
+                            </TouchableOpacity>
                         </View>
                         <View>
-                            <Text
-                                style={{
-                                    marginLeft: scale(10),
-                                    fontSize: fontSizes.FONT22,
-                                    fontFamily: "Poppins_400Regular",
-                                    color: theme?.dark ? "#fff" : "#000",
-                                }}
-                            >
-                                Enrolled Courses
-                            </Text>
-                            <Text
-                                style={{
-                                    marginLeft: scale(10),
-                                    fontSize: fontSizes.FONT15,
-                                    fontFamily: "Poppins_400Regular",
-                                    color: theme?.dark ? "#fff" : "#000",
-                                    opacity: 0.6,
-                                }}
-                            >
-                                Explore your all enrolled courses
-                            </Text>
-                        </View>
-                    </View>
-                </Pressable>
+                            <View>
+                                <ThemedText type="default" style={styles.infoLabel}>
+                                    Account Created:
+                                </ThemedText>
+                                <ThemedText type="default" style={styles.infoValue}>
+                                    {createdAt}
+                                </ThemedText>
+                            </View>
 
-                <Pressable
-                    style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        marginBottom: verticalScale(20),
-                    }}
-                >
-                    <View style={{ flexDirection: "row", alignItems: "center" }}>
-                        <View
-                            style={{
-                                width: scale(38),
-                                height: scale(38),
-                                justifyContent: "center",
-                                alignItems: "center",
-                                borderRadius: scale(10),
-                                borderWidth: 1,
-                                borderColor: "#E2DDFF",
-                            }}
-                        >
-                            <MaterialIcons name="leaderboard" size={scale(23)} color={theme.dark ? "#fff" : "#0047AB"} />
-                        </View>
-                        <View>
-                            <Text
-                                style={{
-                                    marginLeft: scale(10),
-                                    fontSize: fontSizes.FONT22,
-                                    fontFamily: "Poppins_400Regular",
-                                    color: theme?.dark ? "#fff" : "#000",
-                                }}
-                            >
-                                Course Leaderboard
-                            </Text>
-                            <Text
-                                style={{
-                                    marginLeft: scale(10),
-                                    fontSize: fontSizes.FONT15,
-                                    fontFamily: "Poppins_400Regular",
-                                    color: theme?.dark ? "#fff" : "#000",
-                                    opacity: 0.6,
-                                }}
-                            >
-                                Let's see your position in Leaderboard
-                            </Text>
-                        </View>
-                    </View>
-                </Pressable>
+                            <View>
+                                <ThemedText type="default" style={styles.infoLabel}>
+                                    Account Last Updated:
+                                </ThemedText>
+                                <ThemedText type="default" style={styles.infoValue}>
+                                    {updatedAt}
+                                </ThemedText>
+                            </View>
 
-                <Pressable
-                    style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        marginBottom: verticalScale(20),
-                    }}
-                    onPress={() => router.push("/(routes)/my-tickets")}
-                >
-                    <View style={{ flexDirection: "row", alignItems: "center" }}>
-                        <View
-                            style={{
-                                width: scale(38),
-                                height: scale(38),
-                                justifyContent: "center",
-                                alignItems: "center",
-                                borderRadius: scale(10),
-                                borderWidth: 1,
-                                borderColor: "#E2DDFF",
-                            }}
-                        >
-                            <MaterialCommunityIcons name="message-alert-outline" size={scale(22)} color={theme.dark ? "#fff" : "#0047AB"} />
-                        </View>
-                        <View>
-                            <Text
-                                style={{
-                                    marginLeft: scale(10),
-                                    fontSize: fontSizes.FONT22,
-                                    fontFamily: "Poppins_400Regular",
-                                    color: theme?.dark ? "#fff" : "#000",
-                                }}
-                            >
-                                My Tickets
-                            </Text>
-                            <Text
-                                style={{
-                                    marginLeft: scale(10),
-                                    fontSize: fontSizes.FONT15,
-                                    fontFamily: "Poppins_400Regular",
-                                    color: theme?.dark ? "#fff" : "#000",
-                                    opacity: 0.6,
-                                }}
-                            >
-                                Explore your all support tickets
-                            </Text>
-                        </View>
-                    </View>
-                </Pressable>
+                            <View>
+                                <ThemedText type="default" style={styles.infoLabel}>
+                                    Biometrics Added:
+                                </ThemedText>
+                                <ThemedText type="default" style={styles.infoValue}>
+                                    {biometricCreatedAt || "Unavailable"}
+                                </ThemedText>
+                            </View>
 
-                <Pressable
-                    style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        marginBottom: verticalScale(20),
-                    }}
-                    onPress={() => router.push("/(routes)/support-center")}
-                >
-                    <View style={{ flexDirection: "row", alignItems: "center" }}>
-                        <View
-                            style={{
-                                width: scale(38),
-                                height: scale(38),
-                                justifyContent: "center",
-                                alignItems: "center",
-                                borderRadius: scale(10),
-                                borderWidth: 1,
-                                borderColor: "#E2DDFF",
-                            }}
-                        >
-                            <FontAwesome name="support" size={scale(22)} color={theme.dark ? "#fff" : "#0047AB"} />
+                            <View>
+                                <ThemedText type="default" style={styles.infoLabel}>
+                                    Biometrics Last Updated:
+                                </ThemedText>
+                                <ThemedText type="default" style={styles.infoValue}>
+                                    {biometricLastUpdated || "Unavailable"}
+                                </ThemedText>
+                            </View>
                         </View>
-                        <View>
-                            <Text
-                                style={{
-                                    marginLeft: scale(10),
-                                    fontSize: fontSizes.FONT22,
-                                    fontFamily: "Poppins_400Regular",
-                                    color: theme?.dark ? "#fff" : "#000",
-                                }}
-                            >
-                                Support Center
-                            </Text>
-                            <Text
-                                style={{
-                                    marginLeft: scale(10),
-                                    fontSize: fontSizes.FONT15,
-                                    fontFamily: "Poppins_400Regular",
-                                    color: theme?.dark ? "#fff" : "#000",
-                                    opacity: 0.6,
-                                }}
-                            >
-                                Explore our fastest support center
-                            </Text>
-                        </View>
-                    </View>
-                </Pressable>
+                    </Animated.View>
+                </Modal>
 
-                <Pressable
-                    style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        marginBottom: verticalScale(20),
-                    }}
-                    onPress={() => router.push("/(routes)/notification")}
-                >
-                    <View style={{ flexDirection: "row", alignItems: "center" }}>
-                        <View
-                            style={{
-                                width: scale(38),
-                                height: scale(38),
-                                justifyContent: "center",
-                                alignItems: "center",
-                                borderRadius: scale(10),
-                                borderWidth: 1,
-                                borderColor: "#E2DDFF",
-                            }}
-                        >
-                            <Ionicons name="notifications" size={scale(22)} color={theme.dark ? "#fff" : "#0047AB"} />
+                {/*menu*/}
+                <Modal visible={isSettingsMenuOpen} transparent={true} animationType="none" onRequestClose={() => setIsSettingsMenuOpen(false)}>
+                    <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setIsSettingsMenuOpen(false)}>
+                        <Animated.View
+                            style={[
+                                styles.modalOverlayBackground,
+                                {
+                                    opacity: fadeAnim,
+                                },
+                            ]}
+                        />
+                    </TouchableOpacity>
+                    <Animated.View
+                        style={[
+                            styles.settingsMenu,
+                            {
+                                transform: [{ translateY: slideAnim }],
+                            },
+                        ]}
+                    >
+                        <View style={styles.menuHeader}>
+                            <ThemedText type="subtitle" style={styles.menuTitle}>
+                                OPTIONS
+                            </ThemedText>
+                            <TouchableOpacity onPress={() => setIsSettingsMenuOpen(false)}>
+                                <Ionicons name="close" size={24} color="#111827" />
+                            </TouchableOpacity>
                         </View>
-                        <View>
-                            <Text
-                                style={{
-                                    marginLeft: scale(10),
-                                    fontSize: fontSizes.FONT22,
-                                    fontFamily: "Poppins_400Regular",
-                                    color: theme?.dark ? "#fff" : "#000",
-                                }}
-                            >
-                                Notifications
-                            </Text>
-                            <Text
-                                style={{
-                                    marginLeft: scale(10),
-                                    fontSize: fontSizes.FONT15,
-                                    fontFamily: "Poppins_400Regular",
-                                    color: theme?.dark ? "#fff" : "#000",
-                                    opacity: 0.6,
-                                }}
-                            >
-                                Explore the important notifications
-                            </Text>
-                        </View>
-                    </View>
-                </Pressable>
-
-                <Pressable
-                    style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        marginBottom: verticalScale(20),
-                    }}
-                    onPress={() => router.push("/(routes)/settings")}
-                >
-                    <View style={{ flexDirection: "row", alignItems: "center" }}>
-                        <View
-                            style={{
-                                width: scale(38),
-                                height: scale(38),
-                                justifyContent: "center",
-                                alignItems: "center",
-                                borderRadius: scale(10),
-                                borderWidth: 1,
-                                borderColor: "#E2DDFF",
-                            }}
-                        >
-                            <Ionicons name="settings-sharp" size={scale(23)} color={theme.dark ? "#fff" : "#0047AB"} />
-                        </View>
-                        <View>
-                            <Text
-                                style={{
-                                    marginLeft: scale(10),
-                                    fontSize: fontSizes.FONT22,
-                                    fontFamily: "Poppins_400Regular",
-                                    color: theme?.dark ? "#fff" : "#000",
-                                }}
-                            >
+                        <TouchableOpacity style={styles.menuItem} onPress={handleAccountSettings}>
+                            <Ionicons name="cog-outline" size={24} color="#111827" />
+                            <ThemedText type="default" style={styles.menuItemText}>
                                 Settings
-                            </Text>
-                            <Text
-                                style={{
-                                    marginLeft: scale(10),
-                                    fontSize: fontSizes.FONT15,
-                                    fontFamily: "Poppins_400Regular",
-                                    color: theme?.dark ? "#fff" : "#000",
-                                    opacity: 0.6,
-                                }}
-                            >
-                                Control the app as per your preferences
-                            </Text>
-                        </View>
-                    </View>
-                </Pressable>
+                            </ThemedText>
+                            <Ionicons name="chevron-forward" size={20} color="#6B7280" />
+                        </TouchableOpacity>
 
-                <Pressable
-                    style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        marginBottom: verticalScale(20),
-                    }}
-                    onPress={async () => await WebBrowser.openBrowserAsync("https://www.becodemy.com/privacy-policy")}
-                >
-                    <View style={{ flexDirection: "row", alignItems: "center" }}>
-                        <View
-                            style={{
-                                width: scale(38),
-                                height: scale(38),
-                                justifyContent: "center",
-                                alignItems: "center",
-                                borderRadius: scale(10),
-                                borderWidth: 1,
-                                borderColor: "#E2DDFF",
-                            }}
-                        >
-                            <MaterialIcons name="policy" size={scale(23)} color={theme.dark ? "#fff" : "#0047AB"} />
-                        </View>
-                        <View>
-                            <Text
-                                style={{
-                                    marginLeft: scale(10),
-                                    fontSize: fontSizes.FONT22,
-                                    fontFamily: "Poppins_400Regular",
-                                    color: theme?.dark ? "#fff" : "#000",
-                                }}
-                            >
-                                Privacy & Policy
-                            </Text>
-                            <Text
-                                style={{
-                                    marginLeft: scale(10),
-                                    fontSize: fontSizes.FONT15,
-                                    fontFamily: "Poppins_400Regular",
-                                    color: theme?.dark ? "#fff" : "#000",
-                                    opacity: 0.6,
-                                }}
-                            >
-                                Explore our privacy and policy
-                            </Text>
-                        </View>
-                    </View>
-                </Pressable>
-
-                <Pressable
-                    style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        marginBottom: theme.dark ? verticalScale(90) : verticalScale(30),
-                    }}
-                    onPress={() => logoutHandler()}
-                >
-                    <View style={{ flexDirection: "row", alignItems: "center" }}>
-                        <View
-                            style={{
-                                width: scale(38),
-                                height: scale(38),
-                                justifyContent: "center",
-                                alignItems: "center",
-                                borderRadius: scale(10),
-                                borderWidth: 1,
-                                borderColor: "#E2DDFF",
-                            }}
-                        >
-                            <MaterialIcons name="logout" size={scale(23)} color={theme.dark ? "#fff" : "#0047AB"} />
-                        </View>
-                        <View>
-                            <Text
-                                style={{
-                                    marginLeft: scale(10),
-                                    fontSize: fontSizes.FONT22,
-                                    fontFamily: "Poppins_400Regular",
-                                    color: theme?.dark ? "#fff" : "#000",
-                                }}
-                            >
-                                Log Out
-                            </Text>
-                            <Text
-                                style={{
-                                    marginLeft: scale(10),
-                                    fontSize: fontSizes.FONT15,
-                                    fontFamily: "Poppins_400Regular",
-                                    color: theme?.dark ? "#fff" : "#000",
-                                    opacity: 0.6,
-                                }}
-                            >
-                                Logging out from your account
-                            </Text>
-                        </View>
-                    </View>
-                </Pressable>
-            </ScrollView>
-        </View>
+                        <TouchableOpacity style={styles.menuItem} onPress={handleLogout} disabled={isLoggingOut}>
+                            <Ionicons name="log-out-outline" size={24} color="#A31621" />
+                            <ThemedText type="default" style={[styles.menuItemText, { color: "#A31621" }]}>
+                                Logout
+                            </ThemedText>
+                            {isLoggingOut && <ActivityIndicator size="small" color="#A31621" />}
+                        </TouchableOpacity>
+                    </Animated.View>
+                </Modal>
+                {/*logout confirmation*/}
+                <AlertDialog isOpen={isLogoutDialogOpen} onClose={() => setIsLogoutDialogOpen(false)}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <ThemedText type="title">Confirm Logout</ThemedText>
+                        </AlertDialogHeader>
+                        <AlertDialogBody>
+                            <ThemedText type="default">Are you sure you want to log out? You'll need to log in again to access your account.</ThemedText>
+                        </AlertDialogBody>
+                        <AlertDialogFooter>
+                            <Button action="primary" variant="solid" size="sm" onPress={cancelLogout}>
+                                <ButtonText>Cancel</ButtonText>
+                            </Button>
+                            <Button action="secondary" size="sm" onPress={confirmLogout} disabled={isLoggingOut}>
+                                {isLoggingOut ? <ButtonSpinner /> : <ButtonText>Confirm</ButtonText>}
+                            </Button>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+                {/*logout success dialog*/}
+                <AlertDialog isOpen={isSuccessDialogOpen} onClose={() => setIsSuccessDialogOpen(false)}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <ThemedText type="title">Logged Out!</ThemedText>
+                        </AlertDialogHeader>
+                        <AlertDialogBody>
+                            <ThemedText type="default">See you soon!</ThemedText>
+                        </AlertDialogBody>
+                        <AlertDialogFooter>
+                            <Button variant="solid" action="primary" size="md" onPress={handleSuccessOK}>
+                                <ButtonText>Bye!</ButtonText>
+                            </Button>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            </View>
+            <AttendanceHistories />
+        </Animated.View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
+    headerContainer: {
+        padding: 16,
+        paddingBottom: 24,
+        borderBottomLeftRadius: 16,
+        borderBottomRightRadius: 16,
+        zIndex: 13,
+    },
+    contentWrapper: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "flex-start",
+    },
+    centerWrapper: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        padding: 20,
+    },
+    profileSection: {
+        flexDirection: "row",
+        alignItems: "center",
+        flex: 1,
+        marginTop: verticalScale(IsHaveNotch ? (IsIPAD ? 30 : 40) : 30),
+    },
+    profileInfo: {
+        flex: 1,
+        gap: 8,
+    },
+    infoRow: {
+        flexDirection: "row",
+        alignItems: "center",
+    },
+    infoText: {
+        color: "#6B7280",
         flex: 1,
     },
-    header: {
-        height: verticalScale(180),
-        borderBottomLeftRadius: scale(20),
-        borderBottomRightRadius: scale(20),
-        padding: scale(20),
+    actionButtons: {
+        flexDirection: "row",
+        gap: moderateScale(12),
     },
-    headerContent: {
+    actionButton: {
+        justifyContent: "center",
+        alignItems: "center",
+        padding: moderateScale(8),
+        borderRadius: moderateScale(8),
+        backgroundColor: "rgba(107, 114, 128, 0.1)",
+        minWidth: moderateScale(44),
+        minHeight: moderateScale(44),
+    },
+    settingsButton: {
+        justifyContent: "center",
+        alignItems: "center",
+        padding: moderateScale(8),
+        borderRadius: moderateScale(8),
+        backgroundColor: "rgba(107, 114, 128, 0.1)",
+        minWidth: moderateScale(44),
+        minHeight: moderateScale(44),
+    },
+    modalOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        justifyContent: "flex-end",
+    },
+    modalOverlayBackground: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+    },
+    moreInfoMenu: {
+        position: "absolute",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: "#FFFFFF",
+        borderTopLeftRadius: moderateScale(16),
+        borderTopRightRadius: moderateScale(16),
+        paddingHorizontal: moderateScale(20),
+        paddingVertical: moderateScale(20),
+        paddingBottom: moderateScale(40),
+        maxHeight: "60%",
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: -4,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 30,
+        elevation: 20,
+    },
+    settingsMenu: {
+        position: "absolute",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: "#FFFFFF",
+        borderTopLeftRadius: 8,
+        borderTopRightRadius: 8,
+        padding: 20,
+        paddingBottom: 40,
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: -4,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 30,
+        elevation: 20,
+    },
+    menuHeader: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
+        marginBottom: 20,
     },
-    headerTitle: {
-        fontSize: fontSizes.FONT28,
-        color: "#fff",
-        fontFamily: "Poppins_500Medium",
+    menuTitle: {
+        fontSize: 20,
     },
-    profileWrapper: {
-        width: scale(320),
-        backgroundColor: "#fff",
-        height: IsAndroid ? verticalScale(155) : !IsHaveNotch ? verticalScale(175) : IsIPAD ? verticalScale(185) : verticalScale(155),
-        marginTop: verticalScale(-90),
-        alignSelf: "center",
-        borderRadius: scale(20),
-        padding: scale(15),
-        zIndex: 10,
-        shadowColor: "#999",
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-        elevation: 5,
+    infoLabel: {
+        flex: 1,
+        color: "#6B7280",
     },
-    profileImage: {
-        width: scale(50),
-        height: scale(50),
-        borderRadius: scale(25),
-        marginBottom: verticalScale(10),
+    infoValue: {
+        fontSize: 14,
+        color: "#111827",
     },
-    profileTextContainer: {
-        marginBottom: verticalScale(10),
-        marginLeft: scale(10),
-    },
-    profileName: {
-        fontSize: fontSizes.FONT22,
-        fontFamily: "Poppins_500Medium",
-        color: "#000",
-    },
-    profileTitle: {
-        fontSize: fontSizes.FONT17,
-        fontFamily: "Poppins_400Regular",
-        color: "#8a8a8a",
-        width: scale(230),
-        overflow: "hidden",
-    },
-    statsContainer: {
+    menuItem: {
         flexDirection: "row",
-        justifyContent: "space-around",
-        marginTop: verticalScale(10),
-    },
-    statBox: {
         alignItems: "center",
-        justifyContent: "center",
-        width: scale(120),
-        height: verticalScale(62),
-        borderRadius: scale(10),
-        color: "#fff",
+        paddingVertical: 16,
+        gap: 12,
     },
-    statNumber: {
-        fontSize: fontSizes.FONT25,
-        fontFamily: "Poppins_700Bold",
-        color: "#fff",
-    },
-    statLabel: {
-        fontSize: fontSizes.FONT20,
-        fontFamily: "Poppins_400Regular",
-        color: "#fff",
+    menuItemText: {
+        flex: 1,
+        fontSize: 16,
     },
 });
