@@ -1,11 +1,10 @@
+import { retrieveUserInfoForHomepage } from "@/server/service/api/homepage/user-info-service";
 import { IsHaveNotch, IsIPAD } from "@/themes/app.constant";
-import React, { useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
+import React, { useCallback, useState } from "react";
 import { StatusBar, View } from "react-native";
 import { verticalScale } from "react-native-size-matters";
 import { ThemedText } from "../ui/text/themed.text";
-import { useFocusEffect } from "@react-navigation/native";
-import { useCallback } from "react";
-import { retrieveUserInfoForHomepage } from "@/server/service/api/homepage/user-info-service";
 
 export default function WelcomeHeader() {
     const [loading, setLoading] = useState(true);

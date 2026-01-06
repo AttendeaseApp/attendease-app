@@ -1,12 +1,12 @@
 "use client";
-import React from "react";
 import { createAlertDialog } from "@gluestack-ui/core/alert-dialog/creator";
-import { tva } from "@gluestack-ui/utils/nativewind-utils";
-import { withStyleContext, useStyleContext } from "@gluestack-ui/utils/nativewind-utils";
-import { cssInterop } from "nativewind";
 import type { VariantProps } from "@gluestack-ui/utils/nativewind-utils";
-import { Motion, AnimatePresence, createMotionAnimatedComponent, MotionComponentProps } from "@legendapp/motion";
-import { View, Pressable, ScrollView, ViewStyle } from "react-native";
+import { tva, useStyleContext, withStyleContext } from "@gluestack-ui/utils/nativewind-utils";
+import { AnimatePresence, createMotionAnimatedComponent, Motion, MotionComponentProps } from "@legendapp/motion";
+import { cssInterop } from "nativewind";
+import React from "react";
+import { Pressable, ScrollView, View, ViewStyle } from "react-native";
+
 const SCOPE = "ALERT_DIALOG";
 const RootComponent = withStyleContext(View, SCOPE);
 type IMotionViewProps = React.ComponentProps<typeof View> & MotionComponentProps<typeof View, ViewStyle, unknown, unknown, unknown>;
@@ -177,4 +177,4 @@ AlertDialogHeader.displayName = "AlertDialogHeader";
 AlertDialogFooter.displayName = "AlertDialogFooter";
 AlertDialogBody.displayName = "AlertDialogBody";
 AlertDialogBackdrop.displayName = "AlertDialogBackdrop";
-export { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogBody, AlertDialogBackdrop };
+export { AlertDialog, AlertDialogBackdrop, AlertDialogBody, AlertDialogContent, AlertDialogFooter, AlertDialogHeader };

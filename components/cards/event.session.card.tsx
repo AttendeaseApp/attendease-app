@@ -1,18 +1,17 @@
 import { EventStatus } from "@/domain/enums/event/status/event.status.enum";
 import { Location } from "@/domain/interface/location/location-interface";
+import { formatDateTime } from "@/utils/date-time-formatter-util";
+import { getAutoRegisterSetting } from "@/utils/settings/auto-registration.settings";
+import { Octicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { StyleSheet, View, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
+import { ActivityIndicator, Alert, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Button, ButtonText } from "../ui/button";
 import { ThemedText } from "../ui/text/themed.text";
-import { formatDateTime } from "@/utils/date-time-formatter-util";
-import { Button } from "../ui/button";
-import { ButtonText } from "../ui/button";
-import { Octicons } from "@expo/vector-icons";
-import { getAutoRegisterSetting } from "@/utils/settings/auto-registration.settings";
-import { useAttendanceTracking } from "@/store/attendance/tracking/attendance.tracking.context";
-import { sendLocalNotification } from "@/utils/notifications/push-notifications";
-import * as LocationService from "expo-location";
-import { useEventRegistration } from "@/hooks/events/registration/useEventRegistration";
+// import { useAttendanceTracking } from "@/store/attendance/tracking/attendance.tracking.context";
+// import { sendLocalNotification } from "@/utils/notifications/push-notifications";
+// import * as LocationService from "expo-location";
+// import { useEventRegistration } from "@/hooks/events/registration/useEventRegistration";
 
 interface EventCardProps {
     eventId: string;
@@ -83,10 +82,10 @@ export const EventSessionCard: React.FC<EventCardProps> = ({
     registrationLocationId,
     venueLocationId,
     facialVerificationEnabled = true,
-    attendanceLocationMonitoringEnabled = true,
+    // attendanceLocationMonitoringEnabled = true,
 }) => {
     const router = useRouter();
-    const { startTracking } = useAttendanceTracking();
+    // const { startTracking } = useAttendanceTracking();
     const [isAutoRegistering, setIsAutoRegistering] = useState(false);
 
     // const performAutoRegistration = async () => {

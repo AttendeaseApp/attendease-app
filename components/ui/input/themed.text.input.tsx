@@ -1,8 +1,8 @@
+import { useTheme } from "@/context/theme.context";
+import { fontSizes } from "@/themes/app.constant";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import { StyleProp, StyleSheet, TextInput, TextInputProps, TouchableOpacity, View, ViewStyle } from "react-native";
-import { fontSizes } from "@/themes/app.constant";
-import { useTheme } from "@/context/theme.context";
 
 export type ThemedTextInputProps = TextInputProps & {
     variant?: "default" | "outlined" | "filled";
