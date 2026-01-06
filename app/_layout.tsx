@@ -155,7 +155,7 @@ function RootLayoutNav() {
                         </ThemedText>
                     </AlertDialogHeader>
                     <AlertDialogBody>
-                        <ThemedText type="default">Register your face for faster event check-ins with facial verification. It's quick and secure!</ThemedText>
+                        <ThemedText type="default">Register your face for faster event check-ins with facial verification. It&apos;s quick and secure!</ThemedText>
                     </AlertDialogBody>
                     <AlertDialogFooter>
                         <Button size="sm" variant="solid" action="secondary" onPress={() => handleReminderAction("remindLater")}>

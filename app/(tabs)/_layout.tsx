@@ -8,7 +8,7 @@ import { IsAndroid, IsIOS, IsIPAD } from "@/themes/app.constant";
 import { BlurView } from "expo-blur";
 import { ThemedText } from "@/components/ui/text/themed.text";
 
-export default function _layout() {
+export default function Layout() {
     const { theme } = useTheme();
     return (
         <Tabs

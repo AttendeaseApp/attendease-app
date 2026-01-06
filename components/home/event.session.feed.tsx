@@ -27,12 +27,6 @@ export default function EventSessionsFeed() {
                 unsubscribe = await subscribeToEvents((newEvents) => {
                     setEvents(newEvents);
                     setLoadingEvents(false);
-
-                    Animated.timing(fadeAnim, {
-                        toValue: 1,
-                        duration: 500,
-                        useNativeDriver: true,
-                    }).start();
                 });
             }
 
@@ -134,7 +128,7 @@ export default function EventSessionsFeed() {
     );
 
     return (
-        <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+        <View style={[styles.container]}>
             {events.length === 0 ? (
                 renderEmptyState()
             ) : (
@@ -163,7 +157,7 @@ export default function EventSessionsFeed() {
                     refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#27548A"]} tintColor="#27548A" />}
                 />
             )}
-        </Animated.View>
+        </View>
     );
 }
 

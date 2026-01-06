@@ -29,12 +29,6 @@ const AttendanceHistoryCard: React.FC<AttendanceHistoryCardProps> = ({ eventName
 const styles = StyleSheet.create({
     card: {
         padding: 16,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.08,
-        elevation: 3,
-        borderWidth: 1,
-        borderColor: "#eee",
         position: "relative",
     },
 });

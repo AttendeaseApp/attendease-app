@@ -31,19 +31,6 @@ export default function ProfileScreen() {
 
     useEffect(() => {
         getUserProfileDataService(setProfile, setLoading);
-        Animated.parallel([
-            Animated.timing(screenFadeAnim, {
-                toValue: 1,
-                duration: 400,
-                useNativeDriver: true,
-            }),
-            Animated.spring(screenSlideAnim, {
-                toValue: 0,
-                tension: 60,
-                friction: 8,
-                useNativeDriver: true,
-            }),
-        ]).start();
     }, []);
 
     useEffect(() => {
