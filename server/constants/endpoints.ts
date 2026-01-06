@@ -1,5 +1,5 @@
 // production backend URL
-export const API_BASE_URL = "http://localhost:8082";
+export const API_BASE_URL = "http://192.168.1.6:8082";
 
 // WEBSOCKETS
 export const WEBSOCKET_BASE_URL = `${API_BASE_URL}/attendease-websocket`;

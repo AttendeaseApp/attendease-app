@@ -199,13 +199,7 @@ const styles = StyleSheet.create({
         padding: 10,
         borderRadius: 12,
         gap: 13,
-        borderColor: "#eee",
-        borderWidth: 1,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
         backgroundColor: "#FFFFFF",
-        elevation: 3,
     },
     statTextContainer: {
         flex: 1,

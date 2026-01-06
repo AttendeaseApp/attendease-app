@@ -92,7 +92,7 @@ const AlertDialogContent = React.forwardRef<React.ComponentRef<typeof UIAccessib
                 type: "spring",
                 damping: 25,
                 stiffness: 250,
-                overshootClamping: 20,
+                overshootClamping: true,
                 opacity: {
                     type: "timing",
                     duration: 100,

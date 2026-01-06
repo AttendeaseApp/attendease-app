@@ -31,19 +31,6 @@ export default function _layout() {
                         position: IsIOS ? (theme.dark ? "absolute" : "static") : "absolute",
                         borderTopWidth: 0,
                         height: verticalScale(55),
-                        transition: "opacity 0.3s ease-in-out",
-                    },
-                    animation: "shift",
-                    transitionSpec: {
-                        animation: "spring",
-                        config: {
-                            stiffness: 350,
-                            damping: 23,
-                            mass: 1,
-                            overshootClamping: false,
-                            restDisplacementThreshold: 0.01,
-                            restSpeedThreshold: 0.01,
-                        },
                     },
                     tabBarBackground: () => {
                         return (

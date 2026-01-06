@@ -12,6 +12,7 @@ import { getAutoRegisterSetting } from "@/utils/settings/auto-registration.setti
 import { useAttendanceTracking } from "@/store/attendance/tracking/attendance.tracking.context";
 import { sendLocalNotification } from "@/utils/notifications/push-notifications";
 import * as LocationService from "expo-location";
+import { useEventRegistration } from "@/hooks/events/registration/useEventRegistration";
 
 interface EventCardProps {
     eventId: string;
@@ -88,58 +89,58 @@ export const EventSessionCard: React.FC<EventCardProps> = ({
     const { startTracking } = useAttendanceTracking();
     const [isAutoRegistering, setIsAutoRegistering] = useState(false);
 
-    const performAutoRegistration = async () => {
-        if (!registrationLocationId) {
-            Alert.alert("Error", "Registration location is not available.");
-            return;
-        }
+    // const performAutoRegistration = async () => {
+    //     if (!registrationLocationId) {
+    //         Alert.alert("Error", "Registration location is not available.");
+    //         return;
+    //     }
 
-        try {
-            setIsAutoRegistering(true);
+    //     try {
+    //         setIsAutoRegistering(true);
 
-            const { status } = await LocationService.requestForegroundPermissionsAsync();
-            if (status !== "granted") {
-                Alert.alert("Permission Required", "Location permission is needed to register for events.");
-                setIsAutoRegistering(false);
-                return;
-            }
+    //         const { status } = await LocationService.requestForegroundPermissionsAsync();
+    //         if (status !== "granted") {
+    //             Alert.alert("Permission Required", "Location permission is needed to register for events.");
+    //             setIsAutoRegistering(false);
+    //             return;
+    //         }
 
-            const location = await LocationService.getCurrentPositionAsync({});
-            const { latitude, longitude } = location.coords;
+    //         const location = await LocationService.getCurrentPositionAsync({});
+    //         const { latitude, longitude } = location.coords;
 
-            // TODO: Implementation of this
-            const response = await fetch("YOUR_API_ENDPOINT/register", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    eventId,
-                    locationId: registrationLocationId,
-                    latitude,
-                    longitude,
-                    faceData: null,
-                }),
-            });
+    //         // TODO: Implementation of this
+    //         const response = await fetch("YOUR_API_ENDPOINT/register", {
+    //             method: "POST",
+    //             headers: {
+    //                 "Content-Type": "application/json",
+    //             },
+    //             body: JSON.stringify({
+    //                 eventId,
+    //                 locationId: registrationLocationId,
+    //                 latitude,
+    //                 longitude,
+    //                 faceData: null,
+    //             }),
+    //         });
 
-            if (!response.ok) {
-                throw new Error("Registration failed");
-            }
+    //         if (!response.ok) {
+    //             throw new Error("Registration failed");
+    //         }
 
-            if (venueLocationId) {
-                startTracking(eventId, venueLocationId);
-            }
+    //         if (venueLocationId) {
+    //             startTracking(eventId, venueLocationId);
+    //         }
 
-            await sendLocalNotification("Event Registration", `You've been automatically registered for "${eventName}"!`);
+    //         await sendLocalNotification("Event Registration", `You've been automatically registered for "${eventName}"!`);
 
-            Alert.alert("Auto-Registered", `You've been successfully registered for "${eventName}" and attendance tracking has started!`, [{ text: "OK" }]);
-        } catch (error) {
-            console.error("Auto-registration failed:", error);
-            Alert.alert("Registration Failed", "Unable to auto-register. Please try manually.");
-        } finally {
-            setIsAutoRegistering(false);
-        }
-    };
+    //         Alert.alert("Auto-Registered", `You've been successfully registered for "${eventName}" and attendance tracking has started!`, [{ text: "OK" }]);
+    //     } catch (error) {
+    //         console.error("Auto-registration failed:", error);
+    //         Alert.alert("Registration Failed", "Unable to auto-register. Please try manually.");
+    //     } finally {
+    //         setIsAutoRegistering(false);
+    //     }
+    // };
 
     const handleCardPress = async () => {
         const autoRegisterEnabled = await getAutoRegisterSetting();
@@ -166,7 +167,7 @@ export const EventSessionCard: React.FC<EventCardProps> = ({
                     },
                     {
                         text: "Register Now",
-                        onPress: performAutoRegistration,
+                        // onPress: performAutoRegistration,
                     },
                 ],
                 { cancelable: true },
@@ -311,10 +312,10 @@ const styles = StyleSheet.create({
         marginBottom: 16,
         backgroundColor: "#FFFFFF",
         padding: 16,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.08,
-        elevation: 3,
+        // shadowColor: "#000",
+        // shadowOffset: { width: 0, height: 1 },
+        // shadowOpacity: 0.08,
+        // elevation: 3,
         borderWidth: 1,
         borderColor: "#eee",
         position: "relative",
