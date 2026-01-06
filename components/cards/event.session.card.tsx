@@ -1,17 +1,12 @@
 import { EventStatus } from "@/domain/enums/event/status/event.status.enum";
 import { Location } from "@/domain/interface/location/location-interface";
 import { formatDateTime } from "@/utils/date-time-formatter-util";
-import { getAutoRegisterSetting } from "@/utils/settings/auto-registration.settings";
 import { Octicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
-import { ActivityIndicator, Alert, StyleSheet, TouchableOpacity, View } from "react-native";
+import React from "react";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { Button, ButtonText } from "../ui/button";
 import { ThemedText } from "../ui/text/themed.text";
-// import { useAttendanceTracking } from "@/store/attendance/tracking/attendance.tracking.context";
-// import { sendLocalNotification } from "@/utils/notifications/push-notifications";
-// import * as LocationService from "expo-location";
-// import { useEventRegistration } from "@/hooks/events/registration/useEventRegistration";
 
 interface EventCardProps {
     eventId: string;
@@ -81,121 +76,24 @@ export const EventSessionCard: React.FC<EventCardProps> = ({
     venueLocation,
     registrationLocationId,
     venueLocationId,
-    facialVerificationEnabled = true,
-    // attendanceLocationMonitoringEnabled = true,
 }) => {
     const router = useRouter();
-    // const { startTracking } = useAttendanceTracking();
-    const [isAutoRegistering, setIsAutoRegistering] = useState(false);
-
-    // const performAutoRegistration = async () => {
-    //     if (!registrationLocationId) {
-    //         Alert.alert("Error", "Registration location is not available.");
-    //         return;
-    //     }
-
-    //     try {
-    //         setIsAutoRegistering(true);
-
-    //         const { status } = await LocationService.requestForegroundPermissionsAsync();
-    //         if (status !== "granted") {
-    //             Alert.alert("Permission Required", "Location permission is needed to register for events.");
-    //             setIsAutoRegistering(false);
-    //             return;
-    //         }
-
-    //         const location = await LocationService.getCurrentPositionAsync({});
-    //         const { latitude, longitude } = location.coords;
-
-    //         // TODO: Implementation of this
-    //         const response = await fetch("YOUR_API_ENDPOINT/register", {
-    //             method: "POST",
-    //             headers: {
-    //                 "Content-Type": "application/json",
-    //             },
-    //             body: JSON.stringify({
-    //                 eventId,
-    //                 locationId: registrationLocationId,
-    //                 latitude,
-    //                 longitude,
-    //                 faceData: null,
-    //             }),
-    //         });
-
-    //         if (!response.ok) {
-    //             throw new Error("Registration failed");
-    //         }
-
-    //         if (venueLocationId) {
-    //             startTracking(eventId, venueLocationId);
-    //         }
-
-    //         await sendLocalNotification("Event Registration", `You've been automatically registered for "${eventName}"!`);
-
-    //         Alert.alert("Auto-Registered", `You've been successfully registered for "${eventName}" and attendance tracking has started!`, [{ text: "OK" }]);
-    //     } catch (error) {
-    //         console.error("Auto-registration failed:", error);
-    //         Alert.alert("Registration Failed", "Unable to auto-register. Please try manually.");
-    //     } finally {
-    //         setIsAutoRegistering(false);
-    //     }
-    // };
 
     const handleCardPress = async () => {
-        const autoRegisterEnabled = await getAutoRegisterSetting();
-        const canRegister = eventStatus === EventStatus.REGISTRATION || eventStatus === EventStatus.ONGOING;
-
-        if (autoRegisterEnabled && canRegister && !facialVerificationEnabled) {
-            Alert.alert(
-                "Auto-Registration",
-                `Would you like to automatically register for "${eventName}"?`,
-                [
-                    {
-                        text: "View Details",
-                        style: "cancel",
-                        onPress: () => {
-                            router.push({
-                                pathname: "/(modals)/event/details",
-                                params: {
-                                    eventId,
-                                    registrationLocationId,
-                                    venueLocationId,
-                                },
-                            });
-                        },
-                    },
-                    {
-                        text: "Register Now",
-                        // onPress: performAutoRegistration,
-                    },
-                ],
-                { cancelable: true },
-            );
-        } else {
-            router.push({
-                pathname: "/(modals)/event/details",
-                params: {
-                    eventId,
-                    registrationLocationId,
-                    venueLocationId,
-                },
-            });
-        }
+        router.push({
+            pathname: "./(routes)/event/registration",
+            params: {
+                eventId,
+                registrationLocationId,
+                venueLocationId,
+            },
+        });
     };
 
     const statusStyle = getStatusStyle(eventStatus);
 
     return (
-        <TouchableOpacity style={styles.card} onPress={handleCardPress} activeOpacity={0.7} disabled={isAutoRegistering}>
-            {isAutoRegistering && (
-                <View style={styles.loadingOverlay}>
-                    <ActivityIndicator size="large" color="#27548A" />
-                    <ThemedText type="default" style={styles.loadingText}>
-                        Registering...
-                    </ThemedText>
-                </View>
-            )}
-
+        <TouchableOpacity style={styles.card} onPress={handleCardPress} activeOpacity={0.7}>
             {/* Status Badge */}
             <View>
                 <ThemedText type="subtitle" style={[styles.statusText, { color: statusStyle.color }]}>
@@ -295,7 +193,7 @@ export const EventSessionCard: React.FC<EventCardProps> = ({
 
             {/* Action Button */}
             <View style={styles.buttonContainer}>
-                <Button action="secondary" size="xs" onPress={handleCardPress} disabled={isAutoRegistering}>
+                <Button action="secondary" size="xs" onPress={handleCardPress}>
                     <ThemedText type="default">More</ThemedText>
                     <ButtonText>
                         <Octicons name="arrow-right" />
@@ -347,7 +245,6 @@ const styles = StyleSheet.create({
     environmentBadge: {
         fontSize: 12,
         color: "#6B7280",
-        fontStyle: "italic",
     },
     buttonContainer: {
         position: "absolute",

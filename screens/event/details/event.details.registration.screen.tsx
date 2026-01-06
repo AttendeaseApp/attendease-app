@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
-import { StyleSheet, ActivityIndicator, RefreshControl, ScrollView, View } from "react-native";
+import { StyleSheet, StatusBar, ActivityIndicator, RefreshControl, ScrollView, View } from "react-native";
 import { Button } from "@/components/ui/button";
 import { ButtonText } from "@/components/ui/button";
 import { ScreenLayoutContainer } from "@/components/layout/screen.layout.container";
@@ -12,6 +12,7 @@ import { subscribeToEventById } from "@/server/service/api/event/subscribe-to-ev
 import { subscribeToLiveLocationVerificationResponse } from "@/server/service/api/geolocation/subscribe-to-location-verification-response";
 import { publishCurrentLocationPositioning } from "@/server/service/api/geolocation/publish-current-location-positioning";
 import { formatDateTime } from "@/utils/date-time-formatter-util";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 interface LocationStatus {
     isInside: boolean;
@@ -46,8 +47,6 @@ export default function EventDetailsRegistrationScreen() {
     const [locationStatus, setLocationStatus] = useState<LocationStatus | null>(null);
 
     const [refreshing, setRefreshing] = useState(false);
-
-    // ✅ REMOVED ALL ANIMATION CODE
 
     const eventFetchingSubscription = useCallback(async () => {
         if (!eventId) return;
@@ -137,9 +136,9 @@ export default function EventDetailsRegistrationScreen() {
     }
 
     return (
-        <ScreenLayoutContainer>
-            <View style={{ flex: 1 }}>
-                {/* ✅ REMOVED Animated.View wrapper */}
+        <SafeAreaView style={{ flex: 1 }}>
+            <StatusBar barStyle="dark-content" />
+            <View style={styles.headerContainer}>
                 <ScrollView contentContainerStyle={{ paddingBottom: 180 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
                     <View style={styles.infoSection}>
                         <ThemedText type="defaultSemiBold">{eventData?.eventStatus || "N/A"}</ThemedText>
@@ -278,11 +277,18 @@ export default function EventDetailsRegistrationScreen() {
                     </Button>
                 </View>
             </View>
-        </ScreenLayoutContainer>
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
+    headerContainer: {
+        padding: 16,
+        paddingBottom: 24,
+        borderBottomLeftRadius: 16,
+        borderBottomRightRadius: 16,
+        zIndex: 13,
+    },
     infoSection: {
         marginBottom: 16,
     },
@@ -297,7 +303,6 @@ const styles = StyleSheet.create({
         right: 0,
         padding: 16,
         paddingBottom: 30,
-        backgroundColor: "white",
     },
     locationLoadingContainer: {
         flexDirection: "column",

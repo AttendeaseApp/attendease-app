@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { StyleSheet, StatusBar, View, TouchableOpacity, Modal, ActivityIndicator } from "react-native";
+import { StyleSheet, StatusBar, View, TouchableOpacity, Modal, ActivityIndicator, Alert } from "react-native";
 import { verticalScale, moderateScale } from "react-native-size-matters";
 import { ThemedText } from "@/components/ui/text/themed.text";
 import { getUserProfileDataService } from "@/server/service/api/profile/profile-service";
 import { UserStudentResponse } from "@/domain/interface/user/student/user-student.response";
 import { logoutService } from "@/server/service/api/profile/logout-service";
-import { Button, ButtonText, ButtonSpinner } from "@/components/ui/button";
+import { Button, ButtonText } from "@/components/ui/button";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import AttendanceHistories from "@/components/profile/history/attendance.history.feed";
-import { AlertDialog, AlertDialogBody, AlertDialogContent, AlertDialogFooter, AlertDialogHeader } from "@/components/ui/alert-dialog";
 
 export default function ProfileScreen() {
     const [profile, setProfile] = useState<UserStudentResponse | null>(null);
@@ -48,7 +47,7 @@ export default function ProfileScreen() {
             setIsSuccessDialogOpen(true);
         } catch (error) {
             console.error("Logout error:", error);
-            alert("Logout Issue");
+            Alert.alert("Error", "Logout Issue");
         } finally {
             setIsLoggingOut(false);
         }
@@ -62,6 +61,26 @@ export default function ProfileScreen() {
         setIsSuccessDialogOpen(false);
         router.replace("/(routes)/login");
     };
+
+    useEffect(() => {
+        if (isLogoutDialogOpen) {
+            Alert.alert(
+                "Confirm Logout",
+                "Are you sure you want to log out?",
+                [
+                    { text: "Cancel", onPress: cancelLogout, style: "cancel" },
+                    { text: "Confirm", onPress: confirmLogout },
+                ],
+                { cancelable: true, onDismiss: cancelLogout },
+            );
+        }
+    }, [isLogoutDialogOpen]);
+
+    useEffect(() => {
+        if (isSuccessDialogOpen) {
+            Alert.alert("Logged Out!", "See you soon!", [{ text: "Bye!", onPress: handleSuccessOK }], { cancelable: false });
+        }
+    }, [isSuccessDialogOpen]);
 
     if (loading) {
         return (
@@ -87,7 +106,7 @@ export default function ProfileScreen() {
     return (
         <View style={{ flex: 1 }}>
             <View style={styles.headerContainer}>
-                <StatusBar barStyle="light-content" />
+                <StatusBar barStyle="dark-content" />
                 <View style={styles.contentWrapper}>
                     <View style={styles.profileSection}>
                         <View style={styles.profileInfo}>
@@ -169,44 +188,6 @@ export default function ProfileScreen() {
                     </TouchableOpacity>
                 </View>
             </Modal>
-
-            {/* Logout Confirmation Dialog */}
-            <AlertDialog isOpen={isLogoutDialogOpen} onClose={cancelLogout}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <ThemedText type="title">Confirm Logout</ThemedText>
-                    </AlertDialogHeader>
-                    <AlertDialogBody>
-                        <ThemedText type="default">Are you sure you want to log out?</ThemedText>
-                    </AlertDialogBody>
-                    <AlertDialogFooter>
-                        <Button action="primary" variant="solid" size="sm" onPress={cancelLogout}>
-                            <ButtonText>Cancel</ButtonText>
-                        </Button>
-                        <Button action="secondary" size="sm" onPress={confirmLogout} disabled={isLoggingOut}>
-                            {isLoggingOut ? <ButtonSpinner /> : <ButtonText>Confirm</ButtonText>}
-                        </Button>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-
-            {/* Logout Success Dialog */}
-            <AlertDialog isOpen={isSuccessDialogOpen} onClose={handleSuccessOK}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <ThemedText type="title">Logged Out!</ThemedText>
-                    </AlertDialogHeader>
-                    <AlertDialogBody>
-                        <ThemedText type="default">See you soon!</ThemedText>
-                    </AlertDialogBody>
-                    <AlertDialogFooter>
-                        <Button variant="solid" action="primary" size="md" onPress={handleSuccessOK}>
-                            <ButtonText>Bye!</ButtonText>
-                        </Button>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-
             <AttendanceHistories />
         </View>
     );

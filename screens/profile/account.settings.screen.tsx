@@ -1,13 +1,12 @@
-import { IsHaveNotch, IsIPAD } from "@/themes/app.constant";
-import { verticalScale } from "react-native-size-matters";
-import React, { useState, useEffect } from "react";
-import { View, StyleSheet, ScrollView, TouchableOpacity, Switch, StatusBar } from "react-native";
+import { Button, ButtonText } from "@/components/ui/button";
 import { ThemedText } from "@/components/ui/text/themed.text";
+import { CustomAlertDialog } from "@/components/ui/alert/CustomAlertDialog";
+import { getAutoRegisterSetting, saveAutoRegisterSetting } from "@/utils/settings/auto-registration.settings";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { AlertDialog, AlertDialogBody, AlertDialogContent, AlertDialogFooter, AlertDialogHeader } from "@/components/ui/alert-dialog";
-import { Button, ButtonText } from "@/components/ui/button";
-import { saveAutoRegisterSetting, getAutoRegisterSetting } from "@/utils/settings/auto-registration.settings";
+import React, { useEffect, useState } from "react";
+import { ScrollView, StatusBar, StyleSheet, Switch, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function AccountSettingsScreen() {
     const router = useRouter();
@@ -80,152 +79,149 @@ export default function AccountSettingsScreen() {
     );
 
     return (
-        <ScrollView style={styles.container}>
-            <StatusBar barStyle={"light-content"} />
-            <View style={styles.contentWrapper}>
-                <View style={styles.header}>
-                    <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-                        <Ionicons name="arrow-back" size={24} color="#111827" />
-                    </TouchableOpacity>
-                    <ThemedText type="title">SETTINGS</ThemedText>
-                </View>
-            </View>
-
-            <View style={styles.content}>
-                {/*security*/}
-                <View style={styles.section}>
-                    <ThemedText type="subtitle" style={styles.sectionTitle}>
-                        Security
-                    </ThemedText>
-                    <View style={styles.settingsGroup}>{securitySettings.map((setting, index) => renderSettingItem(setting, index, securitySettings))}</View>
+        <SafeAreaView style={{ flex: 1, backgroundColor: "#F9FAFB" }}>
+            <StatusBar barStyle={"dark-content"} />
+            <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+                <View>
+                    <View style={styles.header}>
+                        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+                            <Ionicons name="arrow-back" size={24} color="#111827" />
+                        </TouchableOpacity>
+                        <ThemedText type="title">SETTINGS</ThemedText>
+                    </View>
                 </View>
 
-                {/*event registration*/}
-                <View style={styles.section}>
-                    <ThemedText type="subtitle" style={styles.sectionTitle}>
-                        Event Registration
-                    </ThemedText>
-                    <View style={styles.settingsGroup}>{registrationSettings.map((setting, index) => renderSettingItem(setting, index, registrationSettings))}</View>
-                </View>
+                <View style={styles.content}>
+                    {/*security*/}
+                    <View style={styles.section}>
+                        <ThemedText type="subtitle" style={styles.sectionTitle}>
+                            Security
+                        </ThemedText>
+                        <View style={styles.settingsGroup}>{securitySettings.map((setting, index) => renderSettingItem(setting, index, securitySettings))}</View>
+                    </View>
 
-                {/*notifications*/}
-                <View style={styles.section}>
-                    <ThemedText type="subtitle" style={styles.sectionTitle}>
-                        Notifications
-                    </ThemedText>
-                    <View style={styles.settingsGroup}>{notificationSettings.map((setting, index) => renderSettingItem(setting, index, notificationSettings))}</View>
-                </View>
+                    {/*event registration*/}
+                    <View style={styles.section}>
+                        <ThemedText type="subtitle" style={styles.sectionTitle}>
+                            Event Registration
+                        </ThemedText>
+                        <View style={styles.settingsGroup}>{registrationSettings.map((setting, index) => renderSettingItem(setting, index, registrationSettings))}</View>
+                    </View>
 
-                {/*data privacy*/}
-                <View style={styles.section}>
-                    <ThemedText type="subtitle" style={styles.sectionTitle}>
-                        Data & Privacy
-                    </ThemedText>
-                    <View style={styles.settingsGroup}>
-                        <TouchableOpacity style={styles.settingItem} onPress={() => alert("Privacy policy coming soon")}>
-                            <View style={styles.settingTextContainer}>
-                                <ThemedText type="default" style={styles.settingTitle}>
-                                    Privacy Policy
+                    {/*notifications*/}
+                    <View style={styles.section}>
+                        <ThemedText type="subtitle" style={styles.sectionTitle}>
+                            Notifications
+                        </ThemedText>
+                        <View style={styles.settingsGroup}>{notificationSettings.map((setting, index) => renderSettingItem(setting, index, notificationSettings))}</View>
+                    </View>
+
+                    {/*data privacy*/}
+                    <View style={styles.section}>
+                        <ThemedText type="subtitle" style={styles.sectionTitle}>
+                            Data & Privacy
+                        </ThemedText>
+                        <View style={styles.settingsGroup}>
+                            <TouchableOpacity style={styles.settingItem} onPress={() => alert("Privacy policy coming soon")}>
+                                <View style={styles.settingTextContainer}>
+                                    <ThemedText type="default" style={styles.settingTitle}>
+                                        Privacy Policy
+                                    </ThemedText>
+                                    <ThemedText type="default" style={styles.settingDescription}>
+                                        Read our privacy policy
+                                    </ThemedText>
+                                </View>
+                                <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+                            </TouchableOpacity>
+                            <View style={styles.settingItemBorder} />
+                        </View>
+                    </View>
+
+                    {/*danger zone*/}
+                    <View style={styles.section}>
+                        <ThemedText type="subtitle" style={[styles.sectionTitle, { color: "#EF4444" }]}>
+                            Danger Zone
+                        </ThemedText>
+                        <View style={styles.settingsGroup}>
+                            <TouchableOpacity style={styles.settingItem} onPress={() => setShowDeleteDialog(true)}>
+                                <View style={styles.settingTextContainer}>
+                                    <ThemedText type="default" style={[styles.settingTitle, { color: "#EF4444" }]}>
+                                        Delete Biometrics
+                                    </ThemedText>
+                                    <ThemedText type="default" style={styles.settingDescription}>
+                                        Permanently delete your facial data
+                                    </ThemedText>
+                                </View>
+                                <Ionicons name="chevron-forward" size={20} color="#EF4444" />
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+
+                    {/*about*/}
+                    <View style={styles.section}>
+                        <ThemedText type="subtitle" style={styles.sectionTitle}>
+                            About
+                        </ThemedText>
+                        <View style={styles.settingsGroup}>
+                            <View style={styles.infoItem}>
+                                <ThemedText type="default" style={styles.infoLabel}>
+                                    App Version
                                 </ThemedText>
-                                <ThemedText type="default" style={styles.settingDescription}>
-                                    Read our privacy policy
+                                <ThemedText type="default" style={styles.infoValue}>
+                                    2.0.0-beta
                                 </ThemedText>
                             </View>
-                            <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
-                        </TouchableOpacity>
-                        <View style={styles.settingItemBorder} />
-                    </View>
-                </View>
-
-                {/*danger zone*/}
-                <View style={styles.section}>
-                    <ThemedText type="subtitle" style={[styles.sectionTitle, { color: "#EF4444" }]}>
-                        Danger Zone
-                    </ThemedText>
-                    <View style={styles.settingsGroup}>
-                        <TouchableOpacity style={styles.settingItem} onPress={() => setShowDeleteDialog(true)}>
-                            <View style={styles.settingTextContainer}>
-                                <ThemedText type="default" style={[styles.settingTitle, { color: "#EF4444" }]}>
-                                    Delete Biometrics
+                            <View style={styles.settingItemBorder} />
+                            <View style={styles.infoItem}>
+                                <ThemedText type="default" style={styles.infoLabel}>
+                                    Build Number
                                 </ThemedText>
-                                <ThemedText type="default" style={styles.settingDescription}>
-                                    Permanently delete your facial data
+                                <ThemedText type="default" style={styles.infoValue}>
+                                    100
                                 </ThemedText>
                             </View>
-                            <Ionicons name="chevron-forward" size={20} color="#EF4444" />
-                        </TouchableOpacity>
+                            <View style={styles.settingItemBorder} />
+                            <TouchableOpacity style={styles.infoItem} onPress={() => alert("Terms of Service coming soon")}>
+                                <ThemedText type="default" style={styles.infoLabel}>
+                                    Terms of Service
+                                </ThemedText>
+                                <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+                            </TouchableOpacity>
+                        </View>
                     </View>
                 </View>
 
-                {/*about*/}
-                <View style={styles.section}>
-                    <ThemedText type="subtitle" style={styles.sectionTitle}>
-                        About
-                    </ThemedText>
-                    <View style={styles.settingsGroup}>
-                        <View style={styles.infoItem}>
-                            <ThemedText type="default" style={styles.infoLabel}>
-                                App Version
-                            </ThemedText>
-                            <ThemedText type="default" style={styles.infoValue}>
-                                2.0.0-beta
-                            </ThemedText>
-                        </View>
-                        <View style={styles.settingItemBorder} />
-                        <View style={styles.infoItem}>
-                            <ThemedText type="default" style={styles.infoLabel}>
-                                Build Number
-                            </ThemedText>
-                            <ThemedText type="default" style={styles.infoValue}>
-                                100
-                            </ThemedText>
-                        </View>
-                        <View style={styles.settingItemBorder} />
-                        <TouchableOpacity style={styles.infoItem} onPress={() => alert("Terms of Service coming soon")}>
-                            <ThemedText type="default" style={styles.infoLabel}>
-                                Terms of Service
-                            </ThemedText>
-                            <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </View>
-
-            {/*delete biometrics confirmation*/}
-            <AlertDialog isOpen={showDeleteDialog} onClose={() => setShowDeleteDialog(false)}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <ThemedText type="title">Delete Account?</ThemedText>
-                    </AlertDialogHeader>
-                    <AlertDialogBody>
-                        <ThemedText type="default">This action cannot be undone. Your account and all associated data will be permanently deleted.</ThemedText>
-                    </AlertDialogBody>
-                    <AlertDialogFooter>
-                        <Button action="default" size="sm" onPress={() => setShowDeleteDialog(false)}>
-                            <ButtonText>Cancel</ButtonText>
-                        </Button>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-        </ScrollView>
+                {/*delete biometrics confirmation*/}
+                <CustomAlertDialog
+                    visible={showDeleteDialog}
+                    onClose={() => setShowDeleteDialog(false)}
+                    title="Delete Biometrics?"
+                    message="This action cannot be undone. Your facial data will be permanently deleted from our servers."
+                >
+                    <Button action="primary" size="sm" onPress={() => setShowDeleteDialog(false)}>
+                        <ButtonText>Cancel</ButtonText>
+                    </Button>
+                    <Button
+                        action="secondary"
+                        size="sm"
+                        onPress={() => {
+                            setShowDeleteDialog(false);
+                            alert("Biometrics deletion functionality to be implemented");
+                        }}
+                    >
+                        <ButtonText>Delete</ButtonText>
+                    </Button>
+                </CustomAlertDialog>
+            </ScrollView>
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: "#F9FAFB",
-    },
     header: {
         flexDirection: "row",
         alignItems: "center",
         padding: 16,
-    },
-    contentWrapper: {
-        flexDirection: "row",
-        paddingTop: IsHaveNotch ? (IsIPAD ? verticalScale(30) : verticalScale(40)) : verticalScale(30),
-        justifyContent: "space-between",
-        alignItems: "flex-start",
     },
     backButton: {
         justifyContent: "center",

@@ -1,4 +1,3 @@
-import { AlertDialog, AlertDialogBackdrop, AlertDialogBody, AlertDialogContent, AlertDialogFooter, AlertDialogHeader } from "@/components/ui/alert-dialog";
 import { Button, ButtonText } from "@/components/ui/button";
 import { ThemedText } from "@/components/ui/text/themed.text";
 import { useCaptureProgress } from "@/hooks/biometrics/registration/useCaptureProgress";
@@ -9,7 +8,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef } from "react";
-import { Animated, BackHandler, Easing, View } from "react-native";
+import { Animated, BackHandler, Easing, View, Alert, AlertButton } from "react-native";
 import { BiometricsResult } from "@/domain/interface/biometrics/registration/biometrics.registration.result.response";
 import registrationScreenStyles from "./registration.screen.styles";
 
@@ -39,18 +38,55 @@ export default function OneTimeFacialRegistrationScreen() {
         setAlertOpen(true);
     };
 
+    const skipFacialRegistration = async () => {
+        showAlert("Skip Facial Registration?", "You can skip this step for now, but facial authentication may be required later to access certain features.", [
+            {
+                label: "Cancel",
+                variant: "outline",
+            },
+            {
+                label: "Skip",
+                action: async () => {
+                    await AsyncStorage.setItem("facialRegistrationSkipped", "true");
+                    router.replace("/(tabs)");
+                },
+            },
+        ]);
+    };
+
+    useEffect(() => {
+        if (alertOpen) {
+            const buttons: AlertButton[] = alertActions.map((btn) => ({
+                text: btn.label,
+                onPress: () => {
+                    btn.action?.();
+                    setAlertOpen(false);
+                },
+                style: btn.variant === "outline" ? "cancel" : "default",
+            }));
+            Alert.alert(alertTitle, alertMessage, buttons, { cancelable: true, onDismiss: () => setAlertOpen(false) });
+        }
+    }, [alertOpen, alertTitle, alertMessage, alertActions]);
+
     useEffect(() => {
         const backHandler = BackHandler.addEventListener("hardwareBackPress", () => {
-            showAlert("Registration Required", "You must complete facial registration to access the app. This is a one-time setup for your security.", [
-                { label: "Continue Registration" },
+            showAlert("Registration Required", "You must complete facial registration or skip it to continue.", [
+                {
+                    label: "Continue Registration",
+                    variant: "outline",
+                },
+                {
+                    label: "Skip",
+                    action: async () => {
+                        await AsyncStorage.setItem("skippedFacialRegistration", "true");
+                        router.replace("/(tabs)");
+                    },
+                },
                 {
                     label: "Logout",
                     action: async () => {
-                        await AsyncStorage.removeItem("authToken");
-                        await AsyncStorage.removeItem("facialRegistrationComplete");
-                        await AsyncStorage.removeItem("studentNumber");
+                        await AsyncStorage.multiRemove(["authToken", "facialRegistrationComplete", "studentNumber"]);
                         router.replace("/(routes)/login");
-                        setAlertOpen(false);
                     },
                 },
             ]);
@@ -354,6 +390,12 @@ export default function OneTimeFacialRegistrationScreen() {
                     </Button>
                 </View>
 
+                <View style={{ marginTop: 12, alignItems: "center" }}>
+                    <Button action="secondary" variant="outline" onPress={skipFacialRegistration}>
+                        <ButtonText>Skip Facial Registration</ButtonText>
+                    </Button>
+                </View>
+
                 {/*help me hahaha*/}
                 <View style={{ flexDirection: "row", alignItems: "flex-start", marginTop: 12 }}>
                     <Ionicons name="bulb-outline" size={16} color="#666" style={{ marginRight: 8, marginTop: 2 }} />
@@ -366,38 +408,6 @@ export default function OneTimeFacialRegistrationScreen() {
                     </ThemedText>
                 </View>
             </View>
-
-            <AlertDialog isOpen={alertOpen} onClose={() => setAlertOpen(false)}>
-                <AlertDialogBackdrop />
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <ThemedText type="default" style={{ textTransform: "uppercase" }}>
-                            {alertTitle}
-                        </ThemedText>
-                    </AlertDialogHeader>
-
-                    <AlertDialogBody>
-                        <ThemedText type="default">{alertMessage}</ThemedText>
-                    </AlertDialogBody>
-
-                    <AlertDialogFooter>
-                        {alertActions.map((btn, index) => (
-                            <Button
-                                key={index}
-                                size="sm"
-                                variant={btn.variant ?? "solid"}
-                                action="secondary"
-                                onPress={() => {
-                                    btn.action?.();
-                                    setAlertOpen(false);
-                                }}
-                            >
-                                <ButtonText>{btn.label}</ButtonText>
-                            </Button>
-                        ))}
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
         </Animated.View>
     );
 }

@@ -4,8 +4,8 @@ import { CheckIcon } from "@/components/ui/icon";
 import { ThemedText } from "@/components/ui/text/themed.text";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
-import { Animated, StyleSheet, View } from "react-native";
+import React, { useState } from "react";
+import { StyleSheet, View } from "react-native";
 
 const TOTAL_STEPS = 3;
 
@@ -46,54 +46,12 @@ export default function OnboardingScreen() {
 
     const [currentIndex, setCurrentIndex] = useState(0);
     const [termsAccepted, setTermsAccepted] = useState(false);
-
-    const fadeAnim = useRef(new Animated.Value(1)).current;
-    const slideAnim = useRef(new Animated.Value(0)).current;
-    const iconScale = useRef(new Animated.Value(1)).current;
-
     const currentPage = PAGES[currentIndex];
-
-    useEffect(() => {
-        Animated.parallel([
-            Animated.timing(fadeAnim, {
-                toValue: 1,
-                duration: 400,
-                useNativeDriver: true,
-            }),
-            Animated.timing(slideAnim, {
-                toValue: 0,
-                duration: 400,
-                useNativeDriver: true,
-            }),
-        ]).start();
-
-        Animated.sequence([
-            Animated.timing(iconScale, {
-                toValue: 1.1,
-                duration: 200,
-                useNativeDriver: true,
-            }),
-            Animated.spring(iconScale, {
-                toValue: 1,
-                friction: 6,
-                tension: 40,
-                useNativeDriver: true,
-            }),
-        ]).start();
-    }, [currentIndex]);
-
     const handleNext = () => {
         if (currentIndex === 1 && !termsAccepted) return;
 
         if (currentIndex < TOTAL_STEPS - 1) {
-            Animated.parallel([
-                Animated.timing(fadeAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
-                Animated.timing(slideAnim, { toValue: -50, duration: 200, useNativeDriver: true }),
-            ]).start(() => {
-                setCurrentIndex((prev) => prev + 1);
-                slideAnim.setValue(50);
-                fadeAnim.setValue(0);
-            });
+            setCurrentIndex((prev) => prev + 1);
         } else {
             router.replace({
                 pathname: "/(routes)/(biometrics)/registration",
@@ -104,14 +62,7 @@ export default function OnboardingScreen() {
 
     const handleBack = () => {
         if (currentIndex === 0) return;
-
-        Animated.parallel([Animated.timing(fadeAnim, { toValue: 0, duration: 200, useNativeDriver: true }), Animated.timing(slideAnim, { toValue: 50, duration: 200, useNativeDriver: true })]).start(
-            () => {
-                setCurrentIndex((prev) => prev - 1);
-                slideAnim.setValue(-50);
-                fadeAnim.setValue(0);
-            },
-        );
+        setCurrentIndex((prev) => prev - 1);
     };
 
     return (
@@ -121,10 +72,9 @@ export default function OnboardingScreen() {
                     Step {currentIndex + 1} of {TOTAL_STEPS}
                 </ThemedText>
             </View>
-
-            <Animated.View style={[styles.center, { opacity: fadeAnim, transform: [{ translateX: slideAnim }] }]}>
+            <View style={styles.center}>
                 <View style={styles.page}>
-                    <Animated.View style={[styles.iconWrapper, { transform: [{ scale: iconScale }] }]}>
+                    <View style={styles.iconWrapper}>
                         {currentIndex === 0 ? (
                             <ThemedText type="loginTitle" style={styles.logoText}>
                                 at
@@ -132,8 +82,7 @@ export default function OnboardingScreen() {
                         ) : (
                             <Ionicons name={currentPage.icon as any} size={120} color={currentPage.color} />
                         )}
-                    </Animated.View>
-
+                    </View>
                     <ThemedText type="loginTitle" style={styles.title}>
                         {currentPage.title}
                     </ThemedText>
@@ -172,8 +121,7 @@ export default function OnboardingScreen() {
                         </View>
                     )}
                 </View>
-            </Animated.View>
-
+            </View>
             <View style={styles.footer}>
                 <View style={styles.buttonRow}>
                     {currentIndex > 0 && (

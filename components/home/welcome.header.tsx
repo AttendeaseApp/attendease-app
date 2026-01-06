@@ -27,7 +27,7 @@ export default function WelcomeHeader() {
                 borderEndStartRadius: 12,
             }}
         >
-            <StatusBar barStyle={"light-content"} />
+            <StatusBar barStyle={"dark-content"} />
             <View
                 style={{
                     flexDirection: "row",
