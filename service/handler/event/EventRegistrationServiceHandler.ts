@@ -3,7 +3,6 @@ import { eventRegistrationAPIService } from "@/server/service/api/event/registra
 
 export interface RegistrationParams {
     eventId: string;
-    locationId: string;
     latitude: number | null;
     longitude: number | null;
     faceImageBase64: string;
@@ -11,8 +10,8 @@ export interface RegistrationParams {
     onSuccess?: () => void;
 }
 
-export async function EventRegistrationServiceHandler({ eventId, locationId, latitude, longitude, faceImageBase64, setLoading, onSuccess }: RegistrationParams) {
-    if (!eventId || !locationId || latitude === null || longitude === null) {
+export async function EventRegistrationServiceHandler({ eventId, latitude, longitude, faceImageBase64, setLoading, onSuccess }: RegistrationParams) {
+    if (!eventId || latitude === null || longitude === null) {
         Alert.alert("Missing Data", "Cannot proceed with check-in.");
         return;
     }
@@ -24,10 +23,10 @@ export async function EventRegistrationServiceHandler({ eventId, locationId, lat
     setLoading(true);
 
     try {
-        const result = await eventRegistrationAPIService(eventId, locationId, latitude, longitude, faceImageBase64 || "");
+        const result = await eventRegistrationAPIService(eventId, latitude, longitude, faceImageBase64 || "");
 
         if (result.success) {
-            Alert.alert("Check-In Successful", "Tracking started.", [{ text: "OK", onPress: onSuccess }]);
+            Alert.alert("Check-In Successful", "Tracking started.", [{ text: "Ok", onPress: onSuccess }]);
         } else {
             Alert.alert("Check-In Failed", result.message || "Please try again.");
         }

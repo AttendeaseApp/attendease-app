@@ -17,6 +17,7 @@ export async function getCurrentLocationPositioningService(
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== "granted") {
             Alert.alert("Permission Denied", "Location permission is required for check-in.");
+            setLocationLoading(false);
             return;
         }
 

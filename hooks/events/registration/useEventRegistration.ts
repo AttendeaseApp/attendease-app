@@ -8,9 +8,9 @@ import { getCurrentLocationPositioningService } from "@/utils/geolocation/geoloc
  * Supports optional facial verification based on event config.
  *
  * @param eventId - The event being registered
- * @param locationId - The event's assigned geofenced location
  */
-export function useEventRegistration(eventId: string, locationId: string) {
+export function useEventRegistration(eventId: string) {
+    // ← Removed locationId
     const [latitude, setLatitude] = useState<number | null>(null);
     const [longitude, setLongitude] = useState<number | null>(null);
     const [loading, setLoading] = useState(false);
@@ -24,7 +24,6 @@ export function useEventRegistration(eventId: string, locationId: string) {
         (faceImageBase64: string | null | undefined, onSuccess?: () => void) => {
             EventRegistrationServiceHandler({
                 eventId,
-                locationId,
                 latitude,
                 longitude,
                 faceImageBase64: faceImageBase64 || "",
@@ -32,8 +31,9 @@ export function useEventRegistration(eventId: string, locationId: string) {
                 onSuccess: onSuccess || (() => {}),
             });
         },
-        [eventId, locationId, latitude, longitude],
+        [eventId, latitude, longitude],
     );
+
     return {
         latitude,
         longitude,

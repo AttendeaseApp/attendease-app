@@ -9,47 +9,51 @@ import { useAttendanceTracking } from "@/store/attendance/tracking/attendance.tr
 import { Event } from "@/domain/interface/event/session/event.session";
 import { useEventRegistration } from "@/hooks/events/registration/useEventRegistration";
 import { subscribeToEventById } from "@/server/service/api/event/subscribe-to-event-by-id";
-import { subscribeToLiveLocationVerificationResponse } from "@/server/service/api/geolocation/subscribe-to-location-verification-response";
-import { publishCurrentLocationPositioning } from "@/server/service/api/geolocation/publish-current-location-positioning";
 import { formatDateTime } from "@/utils/date-time-formatter-util";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { verifyRegistrationLocation } from "@/server/service/api/geolocation/verify-registration-location";
+import { LocationTrackingResponse } from "@/domain/interface/location/location-tracking-response";
 
 interface LocationStatus {
     isInside: boolean;
     message: string;
 }
 
-/**
- * Event Details and Registration screen
- *
- * Features:
- * - Display event information
- * - Handle event registration
- * - Start/stop attendance tracking (persists across navigation)
- * - Automatically stops tracking when event concludes
- */
 export default function EventDetailsRegistrationScreen() {
     const router = useRouter();
-    const { eventId, locationId, face } = useLocalSearchParams<{
+    const params = useLocalSearchParams<{
         eventId: string;
-        locationId: string;
+        registrationLocationId: string;
+        venueLocationId: string;
         face?: string;
     }>();
+    const eventId = params.eventId;
+    const registrationLocationId = params.registrationLocationId;
+    const face = params.face;
+
+    const locationId = registrationLocationId;
 
     const { trackingState, startTracking } = useAttendanceTracking();
 
+    if (!eventId || !locationId) {
+        return (
+            <ScreenLayoutContainer>
+                <ActivityIndicator size="large" color="#2A2C24" />
+            </ScreenLayoutContainer>
+        );
+    }
+
     const isTrackingThisEvent = trackingState.isTracking && trackingState.eventId === eventId;
 
-    const { latitude, longitude, loading, locationLoading, register: performRegistration } = useEventRegistration(eventId!, locationId!);
+    const { latitude, longitude, loading, locationLoading, register: performRegistration } = useEventRegistration(eventId);
+
     const [eventData, setEventData] = useState<Event | null>(null);
     const [loadingEvent, setLoadingEvent] = useState(true);
     const [hasRegistrationAttempted, setHasRegistrationAttempted] = useState(false);
     const [locationStatus, setLocationStatus] = useState<LocationStatus | null>(null);
-
     const [refreshing, setRefreshing] = useState(false);
 
     const eventFetchingSubscription = useCallback(async () => {
-        if (!eventId) return;
         setLoadingEvent(true);
         const subscription = await subscribeToEventById(eventId, (data) => {
             console.log("[WS] Event received:", data);
@@ -61,38 +65,33 @@ export default function EventDetailsRegistrationScreen() {
 
     useEffect(() => {
         let cleanup: (() => void) | undefined;
-        eventFetchingSubscription().then((unsub) => {
-            cleanup = unsub;
-        });
+        eventFetchingSubscription().then((unsub) => (cleanup = unsub));
         return () => cleanup?.();
     }, [eventFetchingSubscription]);
 
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true);
+        setTimeout(() => setRefreshing(false), 500);
+    }, []);
+
     useEffect(() => {
         let unsubscribe: any;
+
         async function setup() {
-            unsubscribe = await subscribeToLiveLocationVerificationResponse((res) => {
+            if (latitude === null || longitude === null) return;
+
+            unsubscribe = await verifyRegistrationLocation(eventId, latitude, longitude, (response: LocationTrackingResponse) => {
                 setLocationStatus({
-                    isInside: res.inside,
-                    message: res.message,
+                    isInside: response.inside,
+                    message: response.message,
                 });
             });
         }
+
         setup();
+
         return () => unsubscribe?.unsubscribe?.();
-    }, []);
-
-    const onRefresh = useCallback(async () => {
-        setRefreshing(true);
-        setTimeout(() => {
-            setRefreshing(false);
-        }, 500);
-    }, []);
-
-    useEffect(() => {
-        if (latitude !== null && longitude !== null && locationId) {
-            publishCurrentLocationPositioning(locationId, latitude, longitude);
-        }
-    }, [latitude, longitude, locationId]);
+    }, [eventId, latitude, longitude]);
 
     const facialEnabled = eventData?.facialVerificationEnabled ?? true;
     const attendanceMonitoringEnabled = eventData?.attendanceLocationMonitoringEnabled ?? true;
@@ -103,6 +102,7 @@ export default function EventDetailsRegistrationScreen() {
             console.warn("Cannot start verification: Location data is still loading or unavailable.");
             return;
         }
+
         if (requireFace) {
             setHasRegistrationAttempted(false);
             router.push({
@@ -111,7 +111,7 @@ export default function EventDetailsRegistrationScreen() {
             });
         } else {
             setHasRegistrationAttempted(true);
-            performRegistration(null, () => startTracking(eventId!, locationId!));
+            performRegistration(null, () => startTracking(eventId, locationId));
         }
     };
 
@@ -119,10 +119,10 @@ export default function EventDetailsRegistrationScreen() {
         if (latitude !== null && longitude !== null && !loading && !hasRegistrationAttempted) {
             if (requireFace && face) {
                 setHasRegistrationAttempted(true);
-                performRegistration(face, () => startTracking(eventId!, locationId!));
+                performRegistration(face, () => startTracking(eventId, locationId));
             } else if (!requireFace) {
                 setHasRegistrationAttempted(true);
-                performRegistration(null, () => startTracking(eventId!, locationId!));
+                performRegistration(null, () => startTracking(eventId, locationId));
             }
         }
     }, [face, performRegistration, startTracking, eventId, locationId, latitude, longitude, loading, hasRegistrationAttempted, requireFace]);
@@ -140,6 +140,7 @@ export default function EventDetailsRegistrationScreen() {
             <StatusBar barStyle="dark-content" />
             <View style={styles.headerContainer}>
                 <ScrollView contentContainerStyle={{ paddingBottom: 180 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
+                    {/* --- Event Info Sections --- */}
                     <View style={styles.infoSection}>
                         <ThemedText type="defaultSemiBold">{eventData?.eventStatus || "N/A"}</ThemedText>
                     </View>
@@ -156,6 +157,8 @@ export default function EventDetailsRegistrationScreen() {
                             The event will then proceed to start on {formatDateTime(eventData?.startingDateTime)} and will end on {formatDateTime(eventData?.endingDateTime)}.
                         </ThemedText>
                     </View>
+
+                    {/* --- Eligibility --- */}
                     <View style={styles.infoSection}>
                         <ThemedText type="defaultSemiBold">Eligibility</ThemedText>
                         {eventData?.eligibleStudents ? (
@@ -189,6 +192,8 @@ export default function EventDetailsRegistrationScreen() {
                             <ThemedText type="defaultSemiBold">N/A</ThemedText>
                         )}
                     </View>
+
+                    {/* --- Facial & Attendance --- */}
                     <View style={styles.infoSection}>
                         <ThemedText type="defaultSemiBold">Facial Verification</ThemedText>
                         <ThemedText type="default">{facialEnabled ? "Required" : "Not Required"}</ThemedText>
@@ -198,6 +203,7 @@ export default function EventDetailsRegistrationScreen() {
                         <ThemedText type="default">{attendanceMonitoringEnabled ? "Required" : "Not Required"}</ThemedText>
                     </View>
 
+                    {/* --- Registration & Venue --- */}
                     <View style={styles.infoSection}>
                         <ThemedText type="defaultSemiBold">Registration Location</ThemedText>
                         {eventData?.registrationLocation ? (
@@ -226,6 +232,8 @@ export default function EventDetailsRegistrationScreen() {
                             <ThemedText type="defaultSemiBold">Unavailable</ThemedText>
                         )}
                     </View>
+
+                    {/* --- Attendance Tracking --- */}
                     <View style={styles.eventRegistrationInfoSection}>
                         {isTrackingThisEvent ? (
                             <View style={styles.pingStatusContainer}>
@@ -237,7 +245,6 @@ export default function EventDetailsRegistrationScreen() {
                                           ? "Waiting for event to start before sending pings."
                                           : "Monitoring event status..."}
                                 </ThemedText>
-
                                 <ThemedText
                                     type="default"
                                     style={{
@@ -304,15 +311,6 @@ const styles = StyleSheet.create({
         padding: 16,
         paddingBottom: 30,
     },
-    locationLoadingContainer: {
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 16,
-        gap: 8,
-        margin: 8,
-    },
-    buttonWrapper: { marginTop: 24 },
     pingStatusContainer: {
         flexDirection: "column",
         padding: 12,

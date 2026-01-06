@@ -1,20 +1,17 @@
 import { Button, ButtonText } from "@/components/ui/button";
 import { ThemedText } from "@/components/ui/text/themed.text";
-import { CustomAlertDialog } from "@/components/ui/alert/CustomAlertDialog";
 import { getAutoRegisterSetting, saveAutoRegisterSetting } from "@/utils/settings/auto-registration.settings";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { ScrollView, StatusBar, StyleSheet, Switch, TouchableOpacity, View } from "react-native";
+import { ScrollView, StatusBar, StyleSheet, Switch, TouchableOpacity, View, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function AccountSettingsScreen() {
     const router = useRouter();
     const [notificationsEnabled, setNotificationsEnabled] = useState(true);
     const [autoRegisterEnabled, setAutoRegisterEnabled] = useState(false);
-    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-    // Load auto-register setting on mount
     useEffect(() => {
         const loadSettings = async () => {
             const enabled = await getAutoRegisterSetting();
@@ -23,10 +20,30 @@ export default function AccountSettingsScreen() {
         loadSettings();
     }, []);
 
-    // Save auto-register setting when it changes
     const handleAutoRegisterToggle = async (value: boolean) => {
         setAutoRegisterEnabled(value);
         await saveAutoRegisterSetting(value);
+    };
+
+    const confirmDeleteBiometrics = () => {
+        Alert.alert(
+            "Delete Biometrics?",
+            "This action cannot be undone. Your facial data will be permanently deleted from our servers.",
+            [
+                {
+                    text: "Cancel",
+                    style: "cancel",
+                },
+                {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: () => {
+                        alert("Biometrics deletion functionality to be implemented");
+                    },
+                },
+            ],
+            { cancelable: true },
+        );
     };
 
     const securitySettings = [
@@ -143,7 +160,7 @@ export default function AccountSettingsScreen() {
                             Danger Zone
                         </ThemedText>
                         <View style={styles.settingsGroup}>
-                            <TouchableOpacity style={styles.settingItem} onPress={() => setShowDeleteDialog(true)}>
+                            <TouchableOpacity style={styles.settingItem} onPress={confirmDeleteBiometrics}>
                                 <View style={styles.settingTextContainer}>
                                     <ThemedText type="default" style={[styles.settingTitle, { color: "#EF4444" }]}>
                                         Delete Biometrics
@@ -190,28 +207,6 @@ export default function AccountSettingsScreen() {
                         </View>
                     </View>
                 </View>
-
-                {/*delete biometrics confirmation*/}
-                <CustomAlertDialog
-                    visible={showDeleteDialog}
-                    onClose={() => setShowDeleteDialog(false)}
-                    title="Delete Biometrics?"
-                    message="This action cannot be undone. Your facial data will be permanently deleted from our servers."
-                >
-                    <Button action="primary" size="sm" onPress={() => setShowDeleteDialog(false)}>
-                        <ButtonText>Cancel</ButtonText>
-                    </Button>
-                    <Button
-                        action="secondary"
-                        size="sm"
-                        onPress={() => {
-                            setShowDeleteDialog(false);
-                            alert("Biometrics deletion functionality to be implemented");
-                        }}
-                    >
-                        <ButtonText>Delete</ButtonText>
-                    </Button>
-                </CustomAlertDialog>
             </ScrollView>
         </SafeAreaView>
     );
