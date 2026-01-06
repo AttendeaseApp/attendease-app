@@ -1,17 +1,15 @@
-import { IsHaveNotch, IsIPAD } from "@/themes/app.constant";
-import React, { useState, useRef, useEffect } from "react";
-import { StyleSheet, StatusBar, View, TouchableOpacity, Modal, Animated } from "react-native";
+import React, { useState, useEffect } from "react";
+import { StyleSheet, StatusBar, View, TouchableOpacity, Modal, ActivityIndicator } from "react-native";
 import { verticalScale, moderateScale } from "react-native-size-matters";
 import { ThemedText } from "@/components/ui/text/themed.text";
 import { getUserProfileDataService } from "@/server/service/api/profile/profile-service";
 import { UserStudentResponse } from "@/domain/interface/user/student/user-student.response";
-import { ActivityIndicator } from "react-native";
 import { logoutService } from "@/server/service/api/profile/logout-service";
-import { AlertDialog, AlertDialogBody, AlertDialogContent, AlertDialogFooter, AlertDialogHeader } from "@/components/ui/alert-dialog";
 import { Button, ButtonText, ButtonSpinner } from "@/components/ui/button";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import AttendanceHistories from "@/components/profile/history/attendance.history.feed";
+import { AlertDialog, AlertDialogBody, AlertDialogContent, AlertDialogFooter, AlertDialogHeader } from "@/components/ui/alert-dialog";
 
 export default function ProfileScreen() {
     const [profile, setProfile] = useState<UserStudentResponse | null>(null);
@@ -21,81 +19,12 @@ export default function ProfileScreen() {
     const [isSuccessDialogOpen, setIsSuccessDialogOpen] = useState(false);
     const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
     const [isMoreInfoOpen, setIsMoreInfoOpen] = useState(false);
+
     const router = useRouter();
-    const slideAnim = useRef(new Animated.Value(300)).current;
-    const fadeAnim = useRef(new Animated.Value(0)).current;
-    const screenFadeAnim = useRef(new Animated.Value(0)).current;
-    const screenSlideAnim = useRef(new Animated.Value(20)).current;
-    const moreInfoSlideAnim = useRef(new Animated.Value(300)).current;
-    const moreInfoFadeAnim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
         getUserProfileDataService(setProfile, setLoading);
     }, []);
-
-    useEffect(() => {
-        if (isSettingsMenuOpen) {
-            Animated.parallel([
-                Animated.timing(fadeAnim, {
-                    toValue: 1,
-                    duration: 250,
-                    useNativeDriver: true,
-                }),
-                Animated.spring(slideAnim, {
-                    toValue: 0,
-                    tension: 65,
-                    friction: 9,
-                    useNativeDriver: true,
-                }),
-            ]).start();
-        } else {
-            // Animate out
-            Animated.parallel([
-                Animated.timing(fadeAnim, {
-                    toValue: 0,
-                    duration: 200,
-                    useNativeDriver: true,
-                }),
-                Animated.timing(slideAnim, {
-                    toValue: 300,
-                    duration: 200,
-                    useNativeDriver: true,
-                }),
-            ]).start();
-        }
-    }, [isSettingsMenuOpen]);
-
-    useEffect(() => {
-        if (isMoreInfoOpen) {
-            Animated.parallel([
-                Animated.timing(moreInfoFadeAnim, {
-                    toValue: 1,
-                    duration: 250,
-                    useNativeDriver: true,
-                }),
-                Animated.spring(moreInfoSlideAnim, {
-                    toValue: 0,
-                    tension: 65,
-                    friction: 9,
-                    useNativeDriver: true,
-                }),
-            ]).start();
-        } else {
-            // Animate out
-            Animated.parallel([
-                Animated.timing(moreInfoFadeAnim, {
-                    toValue: 0,
-                    duration: 200,
-                    useNativeDriver: true,
-                }),
-                Animated.timing(moreInfoSlideAnim, {
-                    toValue: 300,
-                    duration: 200,
-                    useNativeDriver: true,
-                }),
-            ]).start();
-        }
-    }, [isMoreInfoOpen]);
 
     const handleLogout = () => {
         setIsSettingsMenuOpen(false);
@@ -104,9 +33,7 @@ export default function ProfileScreen() {
 
     const handleAccountSettings = () => {
         setIsSettingsMenuOpen(false);
-        setTimeout(() => {
-            router.push("/(routes)/(account)/settings");
-        }, 150);
+        router.push("/(routes)/(account)/settings");
     };
 
     const handleMoreInfo = () => {
@@ -133,20 +60,7 @@ export default function ProfileScreen() {
 
     const handleSuccessOK = () => {
         setIsSuccessDialogOpen(false);
-        Animated.parallel([
-            Animated.timing(screenFadeAnim, {
-                toValue: 0,
-                duration: 200,
-                useNativeDriver: true,
-            }),
-            Animated.timing(screenSlideAnim, {
-                toValue: -20,
-                duration: 200,
-                useNativeDriver: true,
-            }),
-        ]).start(() => {
-            router.replace("/(routes)/login");
-        });
+        router.replace("/(routes)/login");
     };
 
     if (loading) {
@@ -171,13 +85,7 @@ export default function ProfileScreen() {
     const { firstName, lastName, userType, createdAt, updatedAt, studentNumber, course, section, cluster, biometricStatus, biometricCreatedAt, biometricLastUpdated } = profile;
 
     return (
-        <Animated.View
-            style={{
-                flex: 1,
-                opacity: screenFadeAnim,
-                transform: [{ translateY: screenSlideAnim }],
-            }}
-        >
+        <View style={{ flex: 1 }}>
             <View style={styles.headerContainer}>
                 <StatusBar barStyle="light-content" />
                 <View style={styles.contentWrapper}>
@@ -187,34 +95,18 @@ export default function ProfileScreen() {
                                 {firstName} {lastName}
                             </ThemedText>
                             <View>
-                                <View style={styles.infoRow}>
-                                    <View>
-                                        <ThemedText type="default" style={styles.infoText} numberOfLines={1}>
-                                            {userType}
-                                        </ThemedText>
-                                    </View>
-                                </View>
-                                <View style={styles.infoRow}>
-                                    <View>
-                                        <ThemedText type="default" style={styles.infoText} numberOfLines={1}>
-                                            {studentNumber || "Student Number Unavailable"}
-                                        </ThemedText>
-                                    </View>
-                                </View>
-                                <View style={styles.infoRow}>
-                                    <View>
-                                        <ThemedText type="default" style={styles.infoText} numberOfLines={1}>
-                                            {course || "Course Unavailable"} | {section || "Section Unavailable"} | {cluster || "Cluster Unavailable"}
-                                        </ThemedText>
-                                    </View>
-                                </View>
-                                <View style={styles.infoRow}>
-                                    <View>
-                                        <ThemedText type="default" style={styles.infoText} numberOfLines={1}>
-                                            Biometrics: {biometricStatus || "Unavailable"}
-                                        </ThemedText>
-                                    </View>
-                                </View>
+                                <ThemedText type="default" style={styles.infoText}>
+                                    User Type: {userType}
+                                </ThemedText>
+                                <ThemedText type="default" style={styles.infoText}>
+                                    Student Number: {studentNumber || "Unavailable"}
+                                </ThemedText>
+                                <ThemedText type="default" style={styles.infoText}>
+                                    {course || "Course Unavailable"} | {section || "Section Unavailable"} | {cluster || "Cluster Unavailable"}
+                                </ThemedText>
+                                <ThemedText type="default" style={styles.infoText}>
+                                    Biometrics: {biometricStatus || "Unavailable"}
+                                </ThemedText>
                             </View>
                         </View>
                         <View style={styles.actionButtons}>
@@ -227,158 +119,96 @@ export default function ProfileScreen() {
                         </View>
                     </View>
                 </View>
-
-                {/* More Info Modal */}
-                <Modal visible={isMoreInfoOpen} transparent={true} animationType="none" onRequestClose={() => setIsMoreInfoOpen(false)}>
-                    <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setIsMoreInfoOpen(false)}>
-                        <Animated.View
-                            style={[
-                                styles.modalOverlayBackground,
-                                {
-                                    opacity: moreInfoFadeAnim,
-                                },
-                            ]}
-                        />
-                    </TouchableOpacity>
-                    <Animated.View
-                        style={[
-                            styles.moreInfoMenu,
-                            {
-                                transform: [{ translateY: moreInfoSlideAnim }],
-                            },
-                        ]}
-                    >
-                        <View style={styles.menuHeader}>
-                            <ThemedText type="subtitle" style={styles.menuTitle}>
-                                ACCOUNT INFO
-                            </ThemedText>
-                            <TouchableOpacity onPress={() => setIsMoreInfoOpen(false)}>
-                                <Ionicons name="close" size={24} color="#111827" />
-                            </TouchableOpacity>
-                        </View>
-                        <View>
-                            <View>
-                                <ThemedText type="default" style={styles.infoLabel}>
-                                    Account Created:
-                                </ThemedText>
-                                <ThemedText type="default" style={styles.infoValue}>
-                                    {createdAt}
-                                </ThemedText>
-                            </View>
-
-                            <View>
-                                <ThemedText type="default" style={styles.infoLabel}>
-                                    Account Last Updated:
-                                </ThemedText>
-                                <ThemedText type="default" style={styles.infoValue}>
-                                    {updatedAt}
-                                </ThemedText>
-                            </View>
-
-                            <View>
-                                <ThemedText type="default" style={styles.infoLabel}>
-                                    Biometrics Added:
-                                </ThemedText>
-                                <ThemedText type="default" style={styles.infoValue}>
-                                    {biometricCreatedAt || "Unavailable"}
-                                </ThemedText>
-                            </View>
-
-                            <View>
-                                <ThemedText type="default" style={styles.infoLabel}>
-                                    Biometrics Last Updated:
-                                </ThemedText>
-                                <ThemedText type="default" style={styles.infoValue}>
-                                    {biometricLastUpdated || "Unavailable"}
-                                </ThemedText>
-                            </View>
-                        </View>
-                    </Animated.View>
-                </Modal>
-
-                {/*menu*/}
-                <Modal visible={isSettingsMenuOpen} transparent={true} animationType="none" onRequestClose={() => setIsSettingsMenuOpen(false)}>
-                    <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setIsSettingsMenuOpen(false)}>
-                        <Animated.View
-                            style={[
-                                styles.modalOverlayBackground,
-                                {
-                                    opacity: fadeAnim,
-                                },
-                            ]}
-                        />
-                    </TouchableOpacity>
-                    <Animated.View
-                        style={[
-                            styles.settingsMenu,
-                            {
-                                transform: [{ translateY: slideAnim }],
-                            },
-                        ]}
-                    >
-                        <View style={styles.menuHeader}>
-                            <ThemedText type="subtitle" style={styles.menuTitle}>
-                                OPTIONS
-                            </ThemedText>
-                            <TouchableOpacity onPress={() => setIsSettingsMenuOpen(false)}>
-                                <Ionicons name="close" size={24} color="#111827" />
-                            </TouchableOpacity>
-                        </View>
-                        <TouchableOpacity style={styles.menuItem} onPress={handleAccountSettings}>
-                            <Ionicons name="cog-outline" size={24} color="#111827" />
-                            <ThemedText type="default" style={styles.menuItemText}>
-                                Settings
-                            </ThemedText>
-                            <Ionicons name="chevron-forward" size={20} color="#6B7280" />
-                        </TouchableOpacity>
-
-                        <TouchableOpacity style={styles.menuItem} onPress={handleLogout} disabled={isLoggingOut}>
-                            <Ionicons name="log-out-outline" size={24} color="#A31621" />
-                            <ThemedText type="default" style={[styles.menuItemText, { color: "#A31621" }]}>
-                                Logout
-                            </ThemedText>
-                            {isLoggingOut && <ActivityIndicator size="small" color="#A31621" />}
-                        </TouchableOpacity>
-                    </Animated.View>
-                </Modal>
-                {/*logout confirmation*/}
-                <AlertDialog isOpen={isLogoutDialogOpen} onClose={() => setIsLogoutDialogOpen(false)}>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <ThemedText type="title">Confirm Logout</ThemedText>
-                        </AlertDialogHeader>
-                        <AlertDialogBody>
-                            <ThemedText type="default">Are you sure you want to log out? You'll need to log in again to access your account.</ThemedText>
-                        </AlertDialogBody>
-                        <AlertDialogFooter>
-                            <Button action="primary" variant="solid" size="sm" onPress={cancelLogout}>
-                                <ButtonText>Cancel</ButtonText>
-                            </Button>
-                            <Button action="secondary" size="sm" onPress={confirmLogout} disabled={isLoggingOut}>
-                                {isLoggingOut ? <ButtonSpinner /> : <ButtonText>Confirm</ButtonText>}
-                            </Button>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
-                {/*logout success dialog*/}
-                <AlertDialog isOpen={isSuccessDialogOpen} onClose={() => setIsSuccessDialogOpen(false)}>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <ThemedText type="title">Logged Out!</ThemedText>
-                        </AlertDialogHeader>
-                        <AlertDialogBody>
-                            <ThemedText type="default">See you soon!</ThemedText>
-                        </AlertDialogBody>
-                        <AlertDialogFooter>
-                            <Button variant="solid" action="primary" size="md" onPress={handleSuccessOK}>
-                                <ButtonText>Bye!</ButtonText>
-                            </Button>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
             </View>
+
+            {/* More Info Modal */}
+            <Modal visible={isMoreInfoOpen} transparent onRequestClose={() => setIsMoreInfoOpen(false)}>
+                <TouchableOpacity style={styles.modalOverlay} onPress={() => setIsMoreInfoOpen(false)} />
+                <View style={styles.moreInfoMenu}>
+                    <View style={styles.menuHeader}>
+                        <ThemedText type="subtitle" style={styles.menuTitle}>
+                            ACCOUNT INFO
+                        </ThemedText>
+                        <TouchableOpacity onPress={() => setIsMoreInfoOpen(false)}>
+                            <Ionicons name="close" size={24} color="#111827" />
+                        </TouchableOpacity>
+                    </View>
+                    <ThemedText type="default">Account Created: {createdAt}</ThemedText>
+                    <ThemedText type="default">Account Last Updated: {updatedAt}</ThemedText>
+                    <ThemedText type="default">Biometrics Added: {biometricCreatedAt || "Unavailable"}</ThemedText>
+                    <ThemedText type="default">Biometrics Last Updated: {biometricLastUpdated || "Unavailable"}</ThemedText>
+                </View>
+            </Modal>
+
+            {/* Settings Menu */}
+            <Modal visible={isSettingsMenuOpen} transparent onRequestClose={() => setIsSettingsMenuOpen(false)}>
+                <TouchableOpacity style={styles.modalOverlay} onPress={() => setIsSettingsMenuOpen(false)} />
+                <View style={styles.settingsMenu}>
+                    <View style={styles.menuHeader}>
+                        <ThemedText type="subtitle" style={styles.menuTitle}>
+                            OPTIONS
+                        </ThemedText>
+                        <TouchableOpacity onPress={() => setIsSettingsMenuOpen(false)}>
+                            <Ionicons name="close" size={24} color="#111827" />
+                        </TouchableOpacity>
+                    </View>
+                    <TouchableOpacity style={styles.menuItem} onPress={handleAccountSettings}>
+                        <Ionicons name="cog-outline" size={24} color="#111827" />
+                        <ThemedText type="default" style={styles.menuItemText}>
+                            Settings
+                        </ThemedText>
+                        <Ionicons name="chevron-forward" size={20} color="#6B7280" />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={styles.menuItem} onPress={handleLogout} disabled={isLoggingOut}>
+                        <Ionicons name="log-out-outline" size={24} color="#A31621" />
+                        <ThemedText type="default" style={[styles.menuItemText, { color: "#A31621" }]}>
+                            Logout
+                        </ThemedText>
+                        {isLoggingOut && <ActivityIndicator size="small" color="#A31621" />}
+                    </TouchableOpacity>
+                </View>
+            </Modal>
+
+            {/* Logout Confirmation Dialog */}
+            <AlertDialog isOpen={isLogoutDialogOpen} onClose={cancelLogout}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <ThemedText type="title">Confirm Logout</ThemedText>
+                    </AlertDialogHeader>
+                    <AlertDialogBody>
+                        <ThemedText type="default">Are you sure you want to log out?</ThemedText>
+                    </AlertDialogBody>
+                    <AlertDialogFooter>
+                        <Button action="primary" variant="solid" size="sm" onPress={cancelLogout}>
+                            <ButtonText>Cancel</ButtonText>
+                        </Button>
+                        <Button action="secondary" size="sm" onPress={confirmLogout} disabled={isLoggingOut}>
+                            {isLoggingOut ? <ButtonSpinner /> : <ButtonText>Confirm</ButtonText>}
+                        </Button>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Logout Success Dialog */}
+            <AlertDialog isOpen={isSuccessDialogOpen} onClose={handleSuccessOK}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <ThemedText type="title">Logged Out!</ThemedText>
+                    </AlertDialogHeader>
+                    <AlertDialogBody>
+                        <ThemedText type="default">See you soon!</ThemedText>
+                    </AlertDialogBody>
+                    <AlertDialogFooter>
+                        <Button variant="solid" action="primary" size="md" onPress={handleSuccessOK}>
+                            <ButtonText>Bye!</ButtonText>
+                        </Button>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
             <AttendanceHistories />
-        </Animated.View>
+        </View>
     );
 }
 
@@ -405,19 +235,14 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         flex: 1,
-        marginTop: verticalScale(IsHaveNotch ? (IsIPAD ? 30 : 40) : 30),
+        marginTop: verticalScale(40),
     },
     profileInfo: {
         flex: 1,
         gap: 8,
     },
-    infoRow: {
-        flexDirection: "row",
-        alignItems: "center",
-    },
     infoText: {
         color: "#6B7280",
-        flex: 1,
     },
     actionButtons: {
         flexDirection: "row",
@@ -443,11 +268,7 @@ const styles = StyleSheet.create({
     },
     modalOverlay: {
         ...StyleSheet.absoluteFillObject,
-        justifyContent: "flex-end",
-    },
-    modalOverlayBackground: {
-        ...StyleSheet.absoluteFillObject,
-        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        backgroundColor: "rgba(0,0,0,0.3)",
     },
     moreInfoMenu: {
         position: "absolute",
@@ -455,20 +276,9 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         backgroundColor: "#FFFFFF",
-        borderTopLeftRadius: moderateScale(16),
-        borderTopRightRadius: moderateScale(16),
-        paddingHorizontal: moderateScale(20),
-        paddingVertical: moderateScale(20),
-        paddingBottom: moderateScale(40),
-        maxHeight: "60%",
-        shadowColor: "#000",
-        shadowOffset: {
-            width: 0,
-            height: -4,
-        },
-        shadowOpacity: 0.1,
-        shadowRadius: 30,
-        elevation: 20,
+        borderTopLeftRadius: 16,
+        borderTopRightRadius: 16,
+        padding: 20,
     },
     settingsMenu: {
         position: "absolute",
@@ -479,15 +289,6 @@ const styles = StyleSheet.create({
         borderTopLeftRadius: 8,
         borderTopRightRadius: 8,
         padding: 20,
-        paddingBottom: 40,
-        shadowColor: "#000",
-        shadowOffset: {
-            width: 0,
-            height: -4,
-        },
-        shadowOpacity: 0.1,
-        shadowRadius: 30,
-        elevation: 20,
     },
     menuHeader: {
         flexDirection: "row",
@@ -497,14 +298,6 @@ const styles = StyleSheet.create({
     },
     menuTitle: {
         fontSize: 20,
-    },
-    infoLabel: {
-        flex: 1,
-        color: "#6B7280",
-    },
-    infoValue: {
-        fontSize: 14,
-        color: "#111827",
     },
     menuItem: {
         flexDirection: "row",

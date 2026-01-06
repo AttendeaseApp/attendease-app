@@ -23,13 +23,13 @@ interface AuthState {
 }
 
 function useProtectedRoute(authState: AuthState, router: any) {
-    const segments = useSegments();
+    const segments = useSegments() as string[];
 
     useEffect(() => {
         if (authState.isLoading) return;
 
         const inAuthGroup = segments[0] === "(routes)" && segments.length > 1 && segments[1] === "login";
-        // const inBiometricsGroup = segments[0] === "(routes)" && segments.length > 1 && segments[1] === "(biometrics)";
+        const inBiometricsGroup = segments[0] === "(routes)" && segments.length > 1 && segments[1] === "(biometrics)";
 
         if (!authState.isLoggedIn && !inAuthGroup) {
             router.replace("/(routes)/login");
