@@ -1,19 +1,38 @@
 import { EventStatus } from "@/domain/enums/event/status/event.status.enum";
 import { EligibilityCriteria } from "../eligibility/event.eligibility";
-import { EventLocation } from "../../location/registration/registration.location";
+import { Location } from "../../location/location-interface";
 
 export interface Event {
     eventId: string;
     eventName: string;
-    eventStatus: EventStatus;
+
+    registrationLocation?: Location;
+    registrationLocationId: string;
+    registrationLocationName: string;
+
+    venueLocation?: Location;
+    venueLocationId: string;
+    venueLocationName: string;
+
     description?: string;
-    timeInRegistrationStartDateTime?: string;
-    startDateTime?: string;
-    endDateTime?: string;
-    eventLocation?: EventLocation;
-    locationId?: string;
     eligibleStudents?: EligibilityCriteria;
+
+    registrationDateTime?: string;
+    startingDateTime?: string;
+    endingDateTime?: string;
+
+    eventStatus: EventStatus;
+
     facialVerificationEnabled?: boolean;
-    createdAt?: string;
-    updatedAt?: string;
+    attendanceLocationMonitoringEnabled?: boolean;
+
+    academicYear?: string;
+    academicYearId?: string;
+    academicYearName?: string;
+    semester?: number;
+    semesterName?: string;
+
+    createdBy?: string;
+    created?: string;
+    lastModified?: string;
 }

@@ -1,7 +1,7 @@
 import { IsHaveNotch, IsIPAD } from "@/themes/app.constant";
 import React, { useState, useRef, useEffect } from "react";
-import { StyleSheet, StatusBar, View, TouchableOpacity, Modal, Animated, Dimensions } from "react-native";
-import { verticalScale, scale, moderateScale } from "react-native-size-matters";
+import { StyleSheet, StatusBar, View, TouchableOpacity, Modal, Animated } from "react-native";
+import { verticalScale, moderateScale } from "react-native-size-matters";
 import { ThemedText } from "@/components/ui/text/themed.text";
 import { getUserProfileDataService } from "@/server/service/api/profile/profile-service";
 import { UserStudentResponse } from "@/domain/interface/user/student/user-student.response";
@@ -12,8 +12,6 @@ import { Button, ButtonText, ButtonSpinner } from "@/components/ui/button";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import AttendanceHistories from "@/components/profile/history/attendance.history.feed";
-
-const { width: screenWidth } = Dimensions.get("window");
 
 export default function ProfileScreen() {
     const [profile, setProfile] = useState<UserStudentResponse | null>(null);

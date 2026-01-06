@@ -1,5 +1,5 @@
 import { EventStatus } from "@/domain/enums/event/status/event.status.enum";
-import { EventLocation } from "@/domain/interface/location/registration/registration.location";
+import { Location } from "@/domain/interface/location/location-interface";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { StyleSheet, View, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
@@ -11,18 +11,21 @@ import { Octicons } from "@expo/vector-icons";
 import { getAutoRegisterSetting } from "@/utils/settings/auto-registration.settings";
 import { useAttendanceTracking } from "@/store/attendance/tracking/attendance.tracking.context";
 import { sendLocalNotification } from "@/utils/notifications/push-notifications";
-import * as Location from "expo-location";
+import * as LocationService from "expo-location";
 
 interface EventCardProps {
+    eventId: string;
     eventName: string;
     eventStatus: EventStatus;
-    timeInRegistrationStartDateTime?: string;
-    startDateTime?: string;
-    endDateTime?: string;
-    locationId?: string;
-    eventLocation?: EventLocation;
-    eventId: string;
+    registrationDateTime?: string;
+    startingDateTime?: string;
+    endingDateTime?: string;
+    registrationLocation?: Location;
+    venueLocation?: Location;
+    registrationLocationId?: string;
+    venueLocationId?: string;
     facialVerificationEnabled?: boolean;
+    attendanceLocationMonitoringEnabled?: boolean;
 }
 
 const getStatusStyle = (status: EventStatus) => {
@@ -71,47 +74,51 @@ export const EventSessionCard: React.FC<EventCardProps> = ({
     eventId,
     eventName,
     eventStatus,
-    timeInRegistrationStartDateTime,
-    startDateTime,
-    endDateTime,
-    eventLocation,
+    registrationDateTime,
+    startingDateTime,
+    endingDateTime,
+    registrationLocation,
+    venueLocation,
+    registrationLocationId,
+    venueLocationId,
     facialVerificationEnabled = true,
+    attendanceLocationMonitoringEnabled = true,
 }) => {
     const router = useRouter();
     const { startTracking } = useAttendanceTracking();
     const [isAutoRegistering, setIsAutoRegistering] = useState(false);
 
     const performAutoRegistration = async () => {
-        if (!eventLocation?.locationId) {
-            Alert.alert("Error", "Event location is not available.");
+        if (!registrationLocationId) {
+            Alert.alert("Error", "Registration location is not available.");
             return;
         }
 
         try {
             setIsAutoRegistering(true);
 
-            const { status } = await Location.requestForegroundPermissionsAsync();
+            const { status } = await LocationService.requestForegroundPermissionsAsync();
             if (status !== "granted") {
                 Alert.alert("Permission Required", "Location permission is needed to register for events.");
                 setIsAutoRegistering(false);
                 return;
             }
 
-            const location = await Location.getCurrentPositionAsync({});
+            const location = await LocationService.getCurrentPositionAsync({});
             const { latitude, longitude } = location.coords;
 
+            // TODO: Implementation of this
             const response = await fetch("YOUR_API_ENDPOINT/register", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    // Add your auth headers here
                 },
                 body: JSON.stringify({
                     eventId,
-                    locationId: eventLocation.locationId,
+                    locationId: registrationLocationId,
                     latitude,
                     longitude,
-                    faceData: null, // No facial verification
+                    faceData: null,
                 }),
             });
 
@@ -119,7 +126,9 @@ export const EventSessionCard: React.FC<EventCardProps> = ({
                 throw new Error("Registration failed");
             }
 
-            startTracking(eventId, eventLocation.locationId);
+            if (venueLocationId) {
+                startTracking(eventId, venueLocationId);
+            }
 
             await sendLocalNotification("Event Registration", `You've been automatically registered for "${eventName}"!`);
 
@@ -149,7 +158,8 @@ export const EventSessionCard: React.FC<EventCardProps> = ({
                                 pathname: "/(modals)/event/details",
                                 params: {
                                     eventId,
-                                    locationId: eventLocation?.locationId,
+                                    registrationLocationId,
+                                    venueLocationId,
                                 },
                             });
                         },
@@ -166,7 +176,8 @@ export const EventSessionCard: React.FC<EventCardProps> = ({
                 pathname: "/(modals)/event/details",
                 params: {
                     eventId,
-                    locationId: eventLocation?.locationId,
+                    registrationLocationId,
+                    venueLocationId,
                 },
             });
         }
@@ -176,7 +187,6 @@ export const EventSessionCard: React.FC<EventCardProps> = ({
 
     return (
         <TouchableOpacity style={styles.card} onPress={handleCardPress} activeOpacity={0.7} disabled={isAutoRegistering}>
-            {/* Loading overlay */}
             {isAutoRegistering && (
                 <View style={styles.loadingOverlay}>
                     <ActivityIndicator size="large" color="#27548A" />
@@ -201,63 +211,89 @@ export const EventSessionCard: React.FC<EventCardProps> = ({
             {/* Event Details */}
             <View style={styles.detailsContainer}>
                 {/* Registration Time */}
-                {timeInRegistrationStartDateTime && (
+                {registrationDateTime && (
                     <View style={styles.detailRow}>
                         <View style={styles.detailTextContainer}>
                             <ThemedText type="default" style={styles.detailLabel}>
                                 Registration
                             </ThemedText>
                             <ThemedText type="default" style={styles.detailValue}>
-                                {formatDateTime(timeInRegistrationStartDateTime)}
+                                {formatDateTime(registrationDateTime)}
                             </ThemedText>
                         </View>
                     </View>
                 )}
 
                 {/* Start Time */}
-                {startDateTime && (
+                {startingDateTime && (
                     <View style={styles.detailRow}>
                         <View style={styles.detailTextContainer}>
                             <ThemedText type="default" style={styles.detailLabel}>
                                 Starts
                             </ThemedText>
                             <ThemedText type="default" style={styles.detailValue}>
-                                {formatDateTime(startDateTime)}
+                                {formatDateTime(startingDateTime)}
                             </ThemedText>
                         </View>
                     </View>
                 )}
 
                 {/* End Time */}
-                {endDateTime && (
+                {endingDateTime && (
                     <View style={styles.detailRow}>
                         <View style={styles.detailTextContainer}>
                             <ThemedText type="default" style={styles.detailLabel}>
                                 Ends
                             </ThemedText>
                             <ThemedText type="default" style={styles.detailValue}>
-                                {formatDateTime(endDateTime)}
+                                {formatDateTime(endingDateTime)}
                             </ThemedText>
                         </View>
                     </View>
                 )}
 
-                {/* Location */}
-                {eventLocation && (
+                {/* Registration Location */}
+                {registrationLocation && (
                     <View style={styles.detailRow}>
                         <View style={styles.detailTextContainer}>
                             <ThemedText type="default" style={styles.detailLabel}>
-                                Location
+                                Registration at
                             </ThemedText>
                             <ThemedText type="default" style={styles.detailValue}>
-                                {eventLocation.locationName}
+                                {registrationLocation.locationName}
+                                {registrationLocation.environment && (
+                                    <ThemedText type="default" style={styles.environmentBadge}>
+                                        {" "}
+                                        • {registrationLocation.environment}
+                                    </ThemedText>
+                                )}
+                            </ThemedText>
+                        </View>
+                    </View>
+                )}
+
+                {/* Venue Location */}
+                {venueLocation && (
+                    <View style={styles.detailRow}>
+                        <View style={styles.detailTextContainer}>
+                            <ThemedText type="default" style={styles.detailLabel}>
+                                Venue
+                            </ThemedText>
+                            <ThemedText type="default" style={styles.detailValue}>
+                                {venueLocation.locationName}
+                                {venueLocation.environment && (
+                                    <ThemedText type="default" style={styles.environmentBadge}>
+                                        {" "}
+                                        • {venueLocation.environment}
+                                    </ThemedText>
+                                )}
                             </ThemedText>
                         </View>
                     </View>
                 )}
             </View>
 
-            {/*goto event details*/}
+            {/* Action Button */}
             <View style={styles.buttonContainer}>
                 <Button action="secondary" size="xs" onPress={handleCardPress} disabled={isAutoRegistering}>
                     <ThemedText type="default">More</ThemedText>
@@ -297,6 +333,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "flex-start",
         gap: 12,
+        marginBottom: 8,
     },
     detailTextContainer: {
         flex: 1,
@@ -311,15 +348,15 @@ const styles = StyleSheet.create({
         color: "#111827",
         fontWeight: "400",
     },
+    environmentBadge: {
+        fontSize: 12,
+        color: "#6B7280",
+        fontStyle: "italic",
+    },
     buttonContainer: {
         position: "absolute",
         bottom: 16,
         right: 16,
-    },
-    viewButton: {
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        minWidth: 80,
     },
     loadingOverlay: {
         position: "absolute",

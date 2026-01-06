@@ -141,6 +141,7 @@ export default function EventDetailsRegistrationScreen() {
     }
 
     const facialEnabled = eventData?.facialVerificationEnabled ?? true;
+    const attendanceMonitoringEnabled = eventData?.attendanceLocationMonitoringEnabled ?? true;
 
     return (
         <ScreenLayoutContainer>
@@ -156,6 +157,12 @@ export default function EventDetailsRegistrationScreen() {
                         <View style={styles.infoSection}>
                             <ThemedText type="defaultSemiBold">Description</ThemedText>
                             <ThemedText type="default">{eventData?.description || "N/A"}</ThemedText>
+                        </View>
+                        <View style={styles.infoSection}>
+                            <ThemedText type="default">Registration starts at exactly {formatDateTime(eventData?.registrationDateTime)}.</ThemedText>
+                            <ThemedText type="default">
+                                The event will then proceed to start on {formatDateTime(eventData?.startingDateTime)} and will end on {formatDateTime(eventData?.endingDateTime)}.
+                            </ThemedText>
                         </View>
                         <View style={styles.infoSection}>
                             <ThemedText type="defaultSemiBold">Eligibility</ThemedText>
@@ -197,16 +204,25 @@ export default function EventDetailsRegistrationScreen() {
                             <ThemedText type="default">{facialEnabled ? "Required" : "Not Required"}</ThemedText>
                         </View>
                         <View style={styles.infoSection}>
-                            <ThemedText type="default">Registration starts at exactly {formatDateTime(eventData?.timeInRegistrationStartDateTime)}.</ThemedText>
-                            <ThemedText type="default">
-                                The event will then proceed to start on {formatDateTime(eventData?.startDateTime)} and will end on {formatDateTime(eventData?.endDateTime)}.
-                            </ThemedText>
+                            <ThemedText type="defaultSemiBold">Attendance Monitoring</ThemedText>
+                            <ThemedText type="default">{attendanceMonitoringEnabled ? "Required" : "Not Required"}</ThemedText>
+                        </View>
+
+                        <View style={styles.infoSection}>
+                            <ThemedText type="defaultSemiBold">Registration Location</ThemedText>
+                            {eventData?.registrationLocation ? (
+                                <ThemedText type="default">
+                                    {eventData.registrationLocation.locationName || "Unavailable"} | {eventData.registrationLocation.environment || "N/A"}
+                                </ThemedText>
+                            ) : (
+                                <ThemedText type="defaultSemiBold">Unavailable</ThemedText>
+                            )}
                         </View>
                         <View style={styles.infoSection}>
                             <ThemedText type="defaultSemiBold">Event Venue</ThemedText>
-                            {eventData?.eventLocation ? (
+                            {eventData?.venueLocation ? (
                                 <ThemedText type="default">
-                                    {eventData.eventLocation.locationName || "Unavailable"} | {eventData.eventLocation.locationType || "N/A"}
+                                    {eventData.venueLocation.locationName || "Unavailable"} | {eventData.venueLocation.environment || "N/A"}
                                 </ThemedText>
                             ) : (
                                 <ThemedText type="defaultSemiBold">Unavailable</ThemedText>

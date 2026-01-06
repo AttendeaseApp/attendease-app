@@ -146,12 +146,15 @@ export default function EventSessionsFeed() {
                             eventId={item.eventId}
                             eventName={item.eventName}
                             eventStatus={item.eventStatus}
-                            timeInRegistrationStartDateTime={item.timeInRegistrationStartDateTime}
-                            startDateTime={item.startDateTime}
-                            endDateTime={item.endDateTime}
-                            locationId={item.locationId}
-                            eventLocation={item.eventLocation}
+                            registrationDateTime={item.registrationDateTime}
+                            startingDateTime={item.startingDateTime}
+                            endingDateTime={item.endingDateTime}
+                            registrationLocation={item.registrationLocation}
+                            venueLocation={item.venueLocation}
+                            registrationLocationId={item.registrationLocationId}
+                            venueLocationId={item.venueLocationId}
                             facialVerificationEnabled={item.facialVerificationEnabled}
+                            attendanceLocationMonitoringEnabled={item.attendanceLocationMonitoringEnabled}
                         />
                     )}
                     ListHeaderComponent={renderHeader}
@@ -160,15 +163,6 @@ export default function EventSessionsFeed() {
                     refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#27548A"]} tintColor="#27548A" />}
                 />
             )}
-            <ThemedText type="default" style={styles.statLabel}>
-                :)
-            </ThemedText>
-            <ThemedText type="default" style={styles.statLabel}>
-                :)
-            </ThemedText>
-            <ThemedText type="default" style={styles.statLabel}>
-                :)
-            </ThemedText>
         </Animated.View>
     );
 }
