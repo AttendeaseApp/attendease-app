@@ -123,6 +123,12 @@ export function AttendanceTrackingProvider({ children }: { children: React.React
     }, [trackingState.isTracking, trackingState.eventId]);
 
     const startTracking = (eventId: string, locationId: string) => {
+        if (!locationId) {
+            console.warn("Cannot start tracking: No venue location ID provided");
+            Alert.alert("Tracking Not Available", "Venue location is not configured for this event.");
+            return;
+        }
+
         hasShownEndAlertRef.current = false;
 
         setTrackingState((prev) => ({

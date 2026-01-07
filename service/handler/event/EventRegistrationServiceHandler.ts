@@ -26,9 +26,10 @@ export async function EventRegistrationServiceHandler({ eventId, latitude, longi
         const result = await eventRegistrationAPIService(eventId, latitude, longitude, faceImageBase64 || "");
 
         if (result.success) {
-            Alert.alert("Check-In Successful", "Tracking started.", [{ text: "Ok", onPress: onSuccess }]);
+            onSuccess?.();
+            Alert.alert("Registration Successful", result.message || "You have been registered for the event.", [{ text: "OK" }]);
         } else {
-            Alert.alert("Check-In Failed", result.message || "Please try again.");
+            Alert.alert("Registration Failed", result.message || "Please try again.");
         }
     } catch (error: any) {
         Alert.alert("Error", error.message || "Something went wrong.");

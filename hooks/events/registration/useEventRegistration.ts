@@ -10,7 +10,6 @@ import { getCurrentLocationPositioningService } from "@/utils/geolocation/geoloc
  * @param eventId - The event being registered
  */
 export function useEventRegistration(eventId: string) {
-    // ← Removed locationId
     const [latitude, setLatitude] = useState<number | null>(null);
     const [longitude, setLongitude] = useState<number | null>(null);
     const [loading, setLoading] = useState(false);
