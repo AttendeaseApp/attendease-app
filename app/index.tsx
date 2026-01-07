@@ -6,5 +6,5 @@ import { Redirect } from "expo-router";
  * This component is just a placeholder and will immediately redirect based on auth state
  */
 export default function Index() {
-    return <Redirect href={"/(tabs)"} />;
+  return <Redirect href={"/(tabs)"} />;
 }

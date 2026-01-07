@@ -2,18 +2,21 @@ import React from "react";
 import { StyleProp, StyleSheet, View, ViewStyle } from "react-native";
 
 interface ScreenContainerProps {
-    children: React.ReactNode;
-    style?: StyleProp<ViewStyle>;
+  children: React.ReactNode;
+  style?: StyleProp<ViewStyle>;
 }
 
-export const ScreenLayoutContainer: React.FC<ScreenContainerProps> = ({ children, style }) => {
-    return <View style={[styles.container, style]}>{children}</View>;
+export const ScreenLayoutContainer: React.FC<ScreenContainerProps> = ({
+  children,
+  style,
+}) => {
+  return <View style={[styles.container, style]}>{children}</View>;
 };
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 16,
-        backgroundColor: "#ffffffff",
-    },
+  container: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: "#ffffffff",
+  },
 });

@@ -24,7 +24,12 @@ export const PING_ATTENDANCE_ENDPOINT = `${API_BASE_URL}/api/registration/ping`;
 
 export const CHECK_CURRENT_LOCATION = `${API_BASE_URL}/api/registration/check-location`;
 
-export const GET_EVENT_BY_ID = (id: string) => `${API_BASE_URL}/api/registration/events/${id}`;
+export const CHECK_ATTENDANCE_STATUS = (eventId: string) =>
+  `${API_BASE_URL}/api/student/event/registration/status/${eventId}`;
+
+export const GET_EVENT_BY_ID = (id: string) =>
+  `${API_BASE_URL}/api/registration/events/${id}`;
 
 // Retrieves the current state of an event.
-export const GET_EVENT_STATE_STATUS = (id: string) => `${API_BASE_URL}/api/registration/${id}/start-status`;
+export const GET_EVENT_STATE_STATUS = (id: string) =>
+  `${API_BASE_URL}/api/registration/${id}/start-status`;

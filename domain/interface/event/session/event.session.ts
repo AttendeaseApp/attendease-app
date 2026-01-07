@@ -3,36 +3,37 @@ import { EligibilityCriteria } from "../eligibility/event.eligibility";
 import { Location } from "../../location/location-interface";
 
 export interface Event {
-    eventId: string;
-    eventName: string;
+  eventId: string;
+  eventName: string;
 
-    registrationLocation?: Location;
-    registrationLocationId: string;
-    registrationLocationName: string;
+  registrationLocation?: Location;
+  registrationLocationId: string;
+  registrationLocationName: string;
 
-    venueLocation?: Location;
-    venueLocationId: string;
-    venueLocationName: string;
+  venueLocation?: Location;
+  venueLocationId: string;
+  venueLocationName: string;
 
-    description?: string;
-    eligibleStudents?: EligibilityCriteria;
+  description?: string;
+  eligibleStudents?: EligibilityCriteria;
 
-    registrationDateTime?: string;
-    startingDateTime?: string;
-    endingDateTime?: string;
+  registrationDateTime?: string;
+  startingDateTime?: string;
+  endingDateTime?: string;
 
-    eventStatus: EventStatus;
+  eventStatus: EventStatus;
 
-    facialVerificationEnabled?: boolean;
-    attendanceLocationMonitoringEnabled?: boolean;
+  facialVerificationEnabled?: boolean;
+  attendanceLocationMonitoringEnabled?: boolean;
+  strictLocationValidation?: boolean;
 
-    academicYear?: string;
-    academicYearId?: string;
-    academicYearName?: string;
-    semester?: number;
-    semesterName?: string;
+  academicYear?: string;
+  academicYearId?: string;
+  academicYearName?: string;
+  semester?: number;
+  semesterName?: string;
 
-    createdBy?: string;
-    created?: string;
-    lastModified?: string;
+  createdBy?: string;
+  created?: string;
+  lastModified?: string;
 }

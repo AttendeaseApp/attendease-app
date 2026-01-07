@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction } from "react";
 
 export interface StopAttendanceTrackingParams {
-    setIsTracking: Dispatch<SetStateAction<boolean>>;
+  setIsTracking: Dispatch<SetStateAction<boolean>>;
 }
 
 /**
@@ -9,6 +9,8 @@ export interface StopAttendanceTrackingParams {
  *
  * @param params - Object containing setIsTracking state setter
  */
-export function useStopAttendanceTracking({ setIsTracking }: StopAttendanceTrackingParams) {
-    setIsTracking(false);
+export function useStopAttendanceTracking({
+  setIsTracking,
+}: StopAttendanceTrackingParams) {
+  setIsTracking(false);
 }

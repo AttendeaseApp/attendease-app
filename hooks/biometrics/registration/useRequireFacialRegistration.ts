@@ -9,43 +9,53 @@ import { DecodedToken } from "@/domain/interface/token/token";
  * Use this in your tab screens or any protected screen
  */
 export const useRequireFacialRegistration = () => {
-    const router = useRouter();
+  const router = useRouter();
 
-    useEffect(() => {
-        const checkRegistrationStatus = async () => {
-            try {
-                const token = await AsyncStorage.getItem("authToken");
+  useEffect(() => {
+    const checkRegistrationStatus = async () => {
+      try {
+        const token = await AsyncStorage.getItem("authToken");
 
-                if (!token) {
-                    router.replace("/(routes)/login");
-                    return;
-                }
+        if (!token) {
+          router.replace("/(routes)/login");
+          return;
+        }
 
-                const decoded: DecodedToken = jwtDecode(token);
-                const currentTime = Date.now() / 1000;
+        const decoded: DecodedToken = jwtDecode(token);
+        const currentTime = Date.now() / 1000;
 
-                if (decoded.exp < currentTime) {
-                    await AsyncStorage.multiRemove(["authToken", "facialRegistrationComplete", "studentNumber"]);
-                    router.replace("/(routes)/login");
-                    return;
-                }
+        if (decoded.exp < currentTime) {
+          await AsyncStorage.multiRemove([
+            "authToken",
+            "facialRegistrationComplete",
+            "studentNumber",
+          ]);
+          router.replace("/(routes)/login");
+          return;
+        }
 
-                const registrationComplete = await AsyncStorage.getItem("facialRegistrationComplete");
+        const registrationComplete = await AsyncStorage.getItem(
+          "facialRegistrationComplete",
+        );
 
-                if (registrationComplete !== "true") {
-                    const studentNumber = await AsyncStorage.getItem("studentNumber");
-                    router.replace({
-                        pathname: "/(routes)/(biometrics)/onboarding",
-                        params: studentNumber ? { studentNumber } : {},
-                    });
-                }
-            } catch (error) {
-                console.error("Error checking registration status:", error);
-                await AsyncStorage.multiRemove(["authToken", "facialRegistrationComplete", "studentNumber"]);
-                router.replace("/(routes)/login");
-            }
-        };
+        if (registrationComplete !== "true") {
+          const studentNumber = await AsyncStorage.getItem("studentNumber");
+          router.replace({
+            pathname: "/(routes)/(biometrics)/onboarding",
+            params: studentNumber ? { studentNumber } : {},
+          });
+        }
+      } catch (error) {
+        console.error("Error checking registration status:", error);
+        await AsyncStorage.multiRemove([
+          "authToken",
+          "facialRegistrationComplete",
+          "studentNumber",
+        ]);
+        router.replace("/(routes)/login");
+      }
+    };
 
-        checkRegistrationStatus();
-    }, []);
+    checkRegistrationStatus();
+  }, []);
 };
