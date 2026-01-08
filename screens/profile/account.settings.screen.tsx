@@ -1,15 +1,17 @@
 import { ThemedText } from "@/components/ui/text/themed.text";
 import { getAutoRegisterSetting, saveAutoRegisterSetting } from "@/utils/settings/auto-registration.settings";
+import { BiometricsManagementService } from "@/server/service/api/biometrics/management/biometrics-management-service";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { ScrollView, StatusBar, StyleSheet, Switch, TouchableOpacity, View, Alert } from "react-native";
+import { ScrollView, StatusBar, StyleSheet, Switch, TouchableOpacity, View, Alert, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function AccountSettingsScreen() {
     const router = useRouter();
     const [notificationsEnabled, setNotificationsEnabled] = useState(true);
     const [autoRegisterEnabled, setAutoRegisterEnabled] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
         const loadSettings = async () => {
@@ -24,6 +26,18 @@ export default function AccountSettingsScreen() {
         await saveAutoRegisterSetting(value);
     };
 
+    const handleDeleteBiometrics = async () => {
+        setIsDeleting(true);
+        try {
+            const message = await BiometricsManagementService.deleteFacialData();
+            Alert.alert("Success", message, [{ text: "Ok" }]);
+        } catch (error: any) {
+            Alert.alert("Error", error.message || "Failed to delete biometric data. Please try again.", [{ text: "Ok" }]);
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
     const confirmDeleteBiometrics = () => {
         Alert.alert(
             "Delete Biometrics?",
@@ -36,9 +50,7 @@ export default function AccountSettingsScreen() {
                 {
                     text: "Delete",
                     style: "destructive",
-                    onPress: () => {
-                        alert("Biometrics deletion functionality to be implemented");
-                    },
+                    onPress: handleDeleteBiometrics,
                 },
             ],
             { cancelable: true },
@@ -176,7 +188,7 @@ export default function AccountSettingsScreen() {
                             Danger Zone
                         </ThemedText>
                         <View style={styles.settingsGroup}>
-                            <TouchableOpacity style={styles.settingItem} onPress={confirmDeleteBiometrics}>
+                            <TouchableOpacity style={styles.settingItem} onPress={confirmDeleteBiometrics} disabled={isDeleting} activeOpacity={0.7}>
                                 <View style={styles.settingTextContainer}>
                                     <ThemedText type="default" style={[styles.settingTitle, { color: "#EF4444" }]}>
                                         Delete My Biometrics
@@ -185,7 +197,7 @@ export default function AccountSettingsScreen() {
                                         Permanently delete your facial data
                                     </ThemedText>
                                 </View>
-                                <Ionicons name="chevron-forward" size={20} color="#EF4444" />
+                                {isDeleting ? <ActivityIndicator size="small" color="#EF4444" /> : <Ionicons name="chevron-forward" size={20} color="#EF4444" />}
                             </TouchableOpacity>
                         </View>
                     </View>
