@@ -9,28 +9,32 @@ import { Alert } from "react-native";
  * @param param0 Object containing state setters for location loading, latitude, and longitude.
  */
 export async function getCurrentLocationPositioningService(
-    setLocationLoading: React.Dispatch<React.SetStateAction<boolean>>,
-    setLatitude: React.Dispatch<React.SetStateAction<number | null>>,
-    setLongitude: React.Dispatch<React.SetStateAction<number | null>>,
+  setLocationLoading: React.Dispatch<React.SetStateAction<boolean>>,
+  setLatitude: React.Dispatch<React.SetStateAction<number | null>>,
+  setLongitude: React.Dispatch<React.SetStateAction<number | null>>,
 ) {
-    try {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== "granted") {
-            Alert.alert("Permission Denied", "Location permission is required for check-in.");
-            return;
-        }
-
-        const location = await Location.getCurrentPositionAsync({
-            accuracy: Location.Accuracy.BestForNavigation,
-        });
-
-        setLatitude(location.coords.latitude);
-        setLongitude(location.coords.longitude);
-        console.log("Location fetched:", location.coords);
-    } catch (error) {
-        console.error("Failed to get location", error);
-        Alert.alert("Location Error", "Failed to fetch your location.");
-    } finally {
-        setLocationLoading(false);
+  try {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Permission Denied",
+        "Location permission is required for check-in.",
+      );
+      setLocationLoading(false);
+      return;
     }
+
+    const location = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.BestForNavigation,
+    });
+
+    setLatitude(location.coords.latitude);
+    setLongitude(location.coords.longitude);
+    console.log("Location fetched:", location.coords);
+  } catch (error) {
+    console.error("Failed to get location", error);
+    Alert.alert("Location Error", "Failed to fetch your location.");
+  } finally {
+    setLocationLoading(false);
+  }
 }

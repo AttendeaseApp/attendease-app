@@ -22,7 +22,7 @@
             "edgeToEdgeEnabled": true,
             "permissions": ["android.permission.CAMERA", "android.permission.RECORD_AUDIO"],
             "softwareKeyboardLayoutMode": "pan",
-            "package": "com.attendease.attendeasemobileapp"
+            "package": "com.attendease.app"
         },
         "web": {
             "bundler": "metro",
@@ -37,7 +37,7 @@
             [
                 "expo-splash-screen",
                 {
-                    "image": "./assets/images/splash-icon.png",
+                    "image": "./assets/images/icon-android.png",
                     "imageWidth": 200,
                     "resizeMode": "contain",
                     "backgroundColor": "#ffffff"
@@ -45,14 +45,11 @@
             ],
             [
                 "expo-camera",
-                [
-                    "expo-build-properties",
-                    {
-                        "ios": {
-                            "useFrameworks": "static"
-                        }
+                {
+                    "ios": {
+                        "useFrameworks": "static"
                     }
-                ]
+                }
             ],
             "expo-asset"
         ],

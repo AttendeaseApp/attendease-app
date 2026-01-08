@@ -8,37 +8,40 @@ import { getCurrentLocationPositioningService } from "@/utils/geolocation/geoloc
  * Supports optional facial verification based on event config.
  *
  * @param eventId - The event being registered
- * @param locationId - The event's assigned geofenced location
  */
-export function useEventRegistration(eventId: string, locationId: string) {
-    const [latitude, setLatitude] = useState<number | null>(null);
-    const [longitude, setLongitude] = useState<number | null>(null);
-    const [loading, setLoading] = useState(false);
-    const [locationLoading, setLocationLoading] = useState(true);
+export function useEventRegistration(eventId: string) {
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [locationLoading, setLocationLoading] = useState(true);
 
-    useEffect(() => {
-        getCurrentLocationPositioningService(setLocationLoading, setLatitude, setLongitude);
-    }, []);
-
-    const register = useCallback(
-        (faceImageBase64: string | null | undefined, onSuccess?: () => void) => {
-            EventRegistrationServiceHandler({
-                eventId,
-                locationId,
-                latitude,
-                longitude,
-                faceImageBase64: faceImageBase64 || "",
-                setLoading,
-                onSuccess: onSuccess || (() => {}),
-            });
-        },
-        [eventId, locationId, latitude, longitude],
+  useEffect(() => {
+    getCurrentLocationPositioningService(
+      setLocationLoading,
+      setLatitude,
+      setLongitude,
     );
-    return {
+  }, []);
+
+  const register = useCallback(
+    (faceImageBase64: string | null | undefined, onSuccess?: () => void) => {
+      EventRegistrationServiceHandler({
+        eventId,
         latitude,
         longitude,
-        loading,
-        locationLoading,
-        register,
-    };
+        faceImageBase64: faceImageBase64 || "",
+        setLoading,
+        onSuccess: onSuccess || (() => {}),
+      });
+    },
+    [eventId, latitude, longitude],
+  );
+
+  return {
+    latitude,
+    longitude,
+    loading,
+    locationLoading,
+    register,
+  };
 }

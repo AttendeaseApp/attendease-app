@@ -1,7 +1,7 @@
 import * as React from "react";
 import { scale, verticalScale } from "react-native-size-matters";
 import Svg, { Rect, Defs, Pattern, Use, Image } from "react-native-svg";
-const IconThree = (props:any) => (
+const IconThree = (props: any) => (
   <Svg
     width={scale(48)}
     height={verticalScale(45)}
