@@ -1,6 +1,6 @@
 {
     "expo": {
-        "name": "attendease--mobile-app",
+        "name": "attendease-mobile-app",
         "slug": "attendease-mobile-app",
         "version": "1.0.0",
         "orientation": "portrait",
@@ -48,18 +48,6 @@
                 {
                     "ios": {
                         "useFrameworks": "static"
-                    }
-                }
-            ],
-            [
-                "expo-build-properties",
-                {
-                    "android": {
-                        "flavorDimensions": ["store"],
-                        "productFlavors": {
-                            "play": {},
-                            "amazon": {}
-                        }
                     }
                 }
             ],

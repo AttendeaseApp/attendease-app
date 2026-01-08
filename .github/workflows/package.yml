@@ -89,7 +89,7 @@ jobs:
             - name: Build Android app
               run: |
                   cd android
-                  ./gradlew assemblePlayRelease --no-daemon
+                  ./gradlew assembleRelease --no-daemon
 
             - name: Find APK files
               run: find android -name "*.apk" -type f
@@ -98,7 +98,7 @@ jobs:
               uses: actions/upload-artifact@v4
               with:
                   name: attendease-app-release
-                  path: android/app/build/outputs/apk/play/release/*.apk
+                  path: android/app/build/outputs/apk/release/*.apk
                   retention-days: 14
 
     build-status:
