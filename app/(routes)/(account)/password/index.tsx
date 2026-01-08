@@ -1,6 +1,6 @@
 import React from "react";
-import AccountSettingsScreen from "@/screens/profile/account.settings.screen";
+import ChangePasswordScreen from "@/screens/profile/change.password.screen";
 
 export default function index() {
-  return <AccountSettingsScreen />;
+    return <ChangePasswordScreen />;
 }
