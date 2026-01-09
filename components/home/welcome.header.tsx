@@ -2,7 +2,7 @@ import { retrieveUserInfoForHomepage } from "@/server/service/api/homepage/user-
 import { IsHaveNotch, IsIPAD } from "@/themes/app.constant";
 import { useFocusEffect } from "@react-navigation/native";
 import React, { useCallback, useState } from "react";
-import { StatusBar, View } from "react-native";
+import { StatusBar, View, ActivityIndicator } from "react-native";
 import { verticalScale } from "react-native-size-matters";
 import { ThemedText } from "../ui/text/themed.text";
 
@@ -18,6 +18,17 @@ export default function WelcomeHeader() {
       retrieveUserInfoForHomepage(setUser, setLoading);
     }, []),
   );
+    
+  if (loading) {
+    return (
+      <View>
+        <ActivityIndicator size="large" color="#27548A" />
+        <ThemedText type="default" style={{ marginTop: 12, opacity: 0.6 }}>
+          Loading
+        </ThemedText>
+      </View>
+    );
+  }
 
   return (
     <View

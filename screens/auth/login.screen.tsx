@@ -1,4 +1,3 @@
-import { ScreenLayoutContainer } from "@/components/layout/screen.layout.container";
 import { Button, ButtonSpinner, ButtonText } from "@/components/ui/button";
 import { ThemedTextInput } from "@/components/ui/input/themed.text.input";
 import { ThemedText } from "@/components/ui/text/themed.text";
@@ -36,11 +35,10 @@ export default function LoginScreen() {
         { cancelable: true, onDismiss: () => setAlertOpen(false) },
       );
     }
-  }, [alertOpen]);
+  }, [alertOpen,alertMessage,alertTitle,setAlertOpen]);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
-      <ScreenLayoutContainer>
         <KeyboardAvoidingView
           style={loginStyles.background}
           behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -90,7 +88,6 @@ export default function LoginScreen() {
             </ThemedText>
           </View>
         </KeyboardAvoidingView>
-      </ScreenLayoutContainer>
     </SafeAreaView>
   );
 }

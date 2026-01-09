@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { subscribeToEvents } from "@/server/service/api/homepage/subscribe-events";
 import { Event } from "@/domain/interface/event/session/event.session";
 import { EventStatus } from "@/domain/enums/event/status/event.status.enum";
@@ -48,6 +48,63 @@ export function useEventNotifications() {
 
     requestPermissions();
   }, []);
+    
+  const checkForNewEvents = useCallback(
+    async (currentEvents: Event[]) => {
+      const { previousEvents, lastNotifiedEvents } =
+        notificationState.current;
+  
+      if (previousEvents.length === 0) {
+        notificationState.current.previousEvents = currentEvents;
+        return;
+      }
+  
+      const previousEventIds = new Set(
+        previousEvents.map((e) => e.eventId),
+      );
+  
+      const newEvents = currentEvents.filter(
+        (event) =>
+          !previousEventIds.has(event.eventId) &&
+          !lastNotifiedEvents.has(event.eventId),
+      );
+  
+      const statusChangedEvents = currentEvents.filter((event) => {
+        const prevEvent = previousEvents.find(
+          (e) => e.eventId === event.eventId,
+        );
+  
+        if (!prevEvent) return false;
+  
+        const statusChanged =
+          (event.eventStatus === EventStatus.ONGOING &&
+            prevEvent.eventStatus !== EventStatus.ONGOING) ||
+          (event.eventStatus === EventStatus.REGISTRATION &&
+            prevEvent.eventStatus !== EventStatus.REGISTRATION);
+  
+        const notAlreadyNotified = !lastNotifiedEvents.has(
+          `${event.eventId}-${event.eventStatus}`,
+        );
+  
+        return statusChanged && notAlreadyNotified;
+      });
+  
+      for (const event of newEvents) {
+        await sendEventNotification(event, "new");
+        lastNotifiedEvents.add(event.eventId);
+      }
+  
+      for (const event of statusChangedEvents) {
+        await sendEventNotification(event, "status_change");
+        lastNotifiedEvents.add(
+          `${event.eventId}-${event.eventStatus}`,
+        );
+      }
+  
+      notificationState.current.previousEvents = currentEvents;
+    },
+    []
+  );
 
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
@@ -66,54 +123,7 @@ export function useEventNotifications() {
         unsubscribe();
       }
     };
-  }, []);
-
-  const checkForNewEvents = async (currentEvents: Event[]) => {
-    const { previousEvents, lastNotifiedEvents } = notificationState.current;
-
-    if (previousEvents.length === 0) {
-      notificationState.current.previousEvents = currentEvents;
-      return;
-    }
-
-    const previousEventIds = new Set(previousEvents.map((e) => e.eventId));
-
-    const newEvents = currentEvents.filter(
-      (event) =>
-        !previousEventIds.has(event.eventId) &&
-        !lastNotifiedEvents.has(event.eventId),
-    );
-
-    const statusChangedEvents = currentEvents.filter((event) => {
-      const prevEvent = previousEvents.find((e) => e.eventId === event.eventId);
-
-      if (!prevEvent) return false;
-
-      const statusChanged =
-        (event.eventStatus === EventStatus.ONGOING &&
-          prevEvent.eventStatus !== EventStatus.ONGOING) ||
-        (event.eventStatus === EventStatus.REGISTRATION &&
-          prevEvent.eventStatus !== EventStatus.REGISTRATION);
-
-      const notAlreadyNotified = !lastNotifiedEvents.has(
-        `${event.eventId}-${event.eventStatus}`,
-      );
-
-      return statusChanged && notAlreadyNotified;
-    });
-
-    for (const event of newEvents) {
-      await sendEventNotification(event, "new");
-      lastNotifiedEvents.add(event.eventId);
-    }
-
-    for (const event of statusChangedEvents) {
-      await sendEventNotification(event, "status_change");
-      lastNotifiedEvents.add(`${event.eventId}-${event.eventStatus}`);
-    }
-
-    notificationState.current.previousEvents = currentEvents;
-  };
+  }, [checkForNewEvents]);
 
   const sendEventNotification = async (
     event: Event,

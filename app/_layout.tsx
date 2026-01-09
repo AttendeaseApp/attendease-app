@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { SplashScreen, Stack, useRouter, useSegments } from "expo-router";
 import { ThemeProvider } from "@/context/theme.context";
 import { AttendanceTrackingProvider } from "@/store/attendance/tracking/attendance.tracking.context";
@@ -30,7 +30,7 @@ function useProtectedRoute(authState: AuthState, router: any) {
       segments[0] === "(routes)" &&
       segments.length > 1 &&
       segments[1] === "(biometrics)";
-    if (!authState.isLoggedIn && !inAuthGroup) {
+    if (!authState.isLoggedIn && !inAuthGroup && !inBiometricsGroup) {
       router.replace("/(routes)/login");
     }
   }, [authState.isLoggedIn, authState.isLoading, segments, router]);
@@ -59,8 +59,33 @@ function RootLayoutNav() {
       showRegistrationReminder();
     }
   }, [authState]);
+    
+    const handleReminderAction = useCallback(
+        async (
+        action: "register" | "remindLater" | "skip",
+      ) => {
+        setReminderOpen(false);
+        if (action === "register") {
+          const studentNumber = await AsyncStorage.getItem("studentNumber");
+          router.replace({
+            pathname: "/(routes)/(biometrics)/onboarding",
+            params: { studentNumber: studentNumber || "" },
+          });
+        } else if (action === "remindLater") {
+          await AsyncStorage.setItem(
+            "skippedFacialRegistration",
+            (Date.now() + 1 * 24 * 60 * 60 * 1000).toString(),
+          );
+        } else if (action === "skip") {
+          await AsyncStorage.setItem(
+            "skippedFacialRegistration",
+            Date.now().toString(),
+          );
+        }
+        },[router]
+    ); 
 
-  useEffect(() => {
+    useEffect(() => {
     if (reminderOpen) {
       Alert.alert(
         "Complete Your Setup",
@@ -79,7 +104,7 @@ function RootLayoutNav() {
         { cancelable: true, onDismiss: () => setReminderOpen(false) },
       );
     }
-  }, [reminderOpen]);
+  }, [reminderOpen,handleReminderAction]);
 
   const checkAuthStatus = async () => {
     try {
@@ -144,29 +169,6 @@ function RootLayoutNav() {
     }
   };
 
-  const handleReminderAction = async (
-    action: "register" | "remindLater" | "skip",
-  ) => {
-    setReminderOpen(false);
-    if (action === "register") {
-      const studentNumber = await AsyncStorage.getItem("studentNumber");
-      router.replace({
-        pathname: "/(routes)/(biometrics)/onboarding",
-        params: { studentNumber: studentNumber || "" },
-      });
-    } else if (action === "remindLater") {
-      await AsyncStorage.setItem(
-        "skippedFacialRegistration",
-        (Date.now() + 1 * 24 * 60 * 60 * 1000).toString(),
-      );
-    } else if (action === "skip") {
-      await AsyncStorage.setItem(
-        "skippedFacialRegistration",
-        Date.now().toString(),
-      );
-    }
-  };
-
   if (authState.isLoading) {
     return null;
   }
@@ -174,7 +176,6 @@ function RootLayoutNav() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
-      {/*<Stack.Screen name="(routes)" />*/}
       <Stack.Screen name="(tabs)" />
     </Stack>
   );
