@@ -1,16 +1,18 @@
 import { Dispatch, SetStateAction } from "react";
 
 export interface StopAttendanceTrackingParams {
-  setIsTracking: Dispatch<SetStateAction<boolean>>;
+    setIsTracking: Dispatch<SetStateAction<boolean>>;
 }
 
 /**
- * Stops attendance tracking by setting isTracking to false.
+ * Returns a function that stops attendance tracking by setting isTracking to false.
  *
- * @param params - Object containing setIsTracking state setter
+ * This is NOT a React hook - it's a regular function that returns a cleanup function.
+ *
+ * @returns Function to stop tracking
  */
-export function useStopAttendanceTracking({
-  setIsTracking,
-}: StopAttendanceTrackingParams) {
-  setIsTracking(false);
+export function useStopAttendanceTracking() {
+    return ({ setIsTracking }: StopAttendanceTrackingParams) => {
+        setIsTracking(false);
+    };
 }
