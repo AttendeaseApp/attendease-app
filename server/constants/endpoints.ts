@@ -1,7 +1,7 @@
 /**
  * Main entry point for the ATTENDEASE BACKEND SERVICE
  */
-export const API_BASE_URL = "http://192.168.1.7:8082";
+export const API_BASE_URL = "https://attendease-backend-latest.onrender.com";
 
 /**
  * WebSocket Base URL
