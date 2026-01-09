@@ -1,8 +1,7 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState, useRef } from "react";
 import { StyleSheet, StatusBar, ActivityIndicator, RefreshControl, ScrollView, View, Alert } from "react-native";
-import { Button } from "@/components/ui/button";
-import { ButtonText } from "@/components/ui/button";
+import { Button, ButtonText } from "@/components/ui/button";
 import { ThemedText } from "@/components/ui/text/themed.text";
 import { useAttendanceTracking } from "@/store/attendance/tracking/attendance.tracking.context";
 import { Event } from "@/domain/interface/event/session/event.session";
@@ -39,20 +38,16 @@ export default function EventDetailsRegistrationScreen() {
     const [checkingStatus, setCheckingStatus] = useState(true);
     const [locationStatus, setLocationStatus] = useState<LocationStatus | null>(null);
     const [refreshing, setRefreshing] = useState(false);
-
     const [isPollingForUpgrade, setIsPollingForUpgrade] = useState(false);
     const [autoUpgradeMessage, setAutoUpgradeMessage] = useState<string | null>(null);
-    const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+    const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const registrationInProgressRef = useRef(false);
     const faceProcessedRef = useRef(false);
 
-    if (!eventId) {
-        return <ActivityIndicator size="large" color="#2A2C24" />;
-    }
+    const { latitude, longitude, loading, locationLoading, register: performRegistration } = useEventRegistration(eventId || "");
 
     const isTrackingThisEvent = trackingState.isTracking && trackingState.eventId === eventId;
-    const { latitude, longitude, loading, locationLoading, register: performRegistration } = useEventRegistration(eventId);
 
     // registration state based on statuses
     const isFullyRegistered = registrationStatus?.isRegistered && ["REGISTERED", "LATE", "PRESENT", "IDLE"].includes(registrationStatus.attendanceStatus || "");
@@ -84,42 +79,6 @@ export default function EventDetailsRegistrationScreen() {
     }, [eventFetchingSubscription]);
 
     useEffect(() => {
-        async function checkStatus() {
-            if (!eventId) return;
-
-            // TODO: CLEANUPS maybe
-            try {
-                setCheckingStatus(true);
-                const status = await checkEventRegistrationStatus(eventId);
-                console.log("Registration status:", status);
-                setRegistrationStatus(status);
-
-                if (status.attendanceStatus === "PARTIALLY_REGISTERED" && eventData?.strictLocationValidation && !isPollingForUpgrade) {
-                    startAutoUpgradePolling();
-                }
-                if (
-                    status.isRegistered &&
-                    ["REGISTERED", "LATE", "PRESENT", "IDLE"].includes(status.attendanceStatus || "") &&
-                    eventData?.attendanceLocationMonitoringEnabled &&
-                    eventData?.venueLocationId &&
-                    !isTrackingThisEvent
-                ) {
-                    console.log("Resuming tracking for registered student");
-                    startTracking(eventId, eventData.venueLocationId);
-                }
-            } catch (error) {
-                console.error("Failed to check registration:", error);
-            } finally {
-                setCheckingStatus(false);
-            }
-        }
-
-        if (eventData) {
-            checkStatus();
-        }
-    }, [eventId, eventData?.strictLocationValidation, eventData?.attendanceLocationMonitoringEnabled, eventData?.venueLocationId]);
-
-    useEffect(() => {
         let unsubscribe: any;
         async function setup() {
             if (latitude === null || longitude === null || !eventId) return;
@@ -134,6 +93,15 @@ export default function EventDetailsRegistrationScreen() {
         setup();
         return () => unsubscribe?.unsubscribe?.();
     }, [eventId, latitude, longitude]);
+
+    const stopAutoUpgradePolling = useCallback(() => {
+        if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+            pollingIntervalRef.current = null;
+        }
+        setIsPollingForUpgrade(false);
+        setAutoUpgradeMessage(null);
+    }, []);
 
     const startAutoUpgradePolling = useCallback(() => {
         if (pollingIntervalRef.current) {
@@ -173,22 +141,57 @@ export default function EventDetailsRegistrationScreen() {
                 console.error("Auto-upgrade check failed:", error);
             }
         }, 10000);
-    }, [eventId, latitude, longitude, eventData, shouldStartTracking, startTracking]);
-
-    const stopAutoUpgradePolling = useCallback(() => {
-        if (pollingIntervalRef.current) {
-            clearInterval(pollingIntervalRef.current);
-            pollingIntervalRef.current = null;
-        }
-        setIsPollingForUpgrade(false);
-        setAutoUpgradeMessage(null);
-    }, []);
+    }, [eventId, latitude, longitude, eventData, shouldStartTracking, startTracking, stopAutoUpgradePolling]);
 
     useEffect(() => {
         return () => {
             stopAutoUpgradePolling();
         };
     }, [stopAutoUpgradePolling]);
+
+    useEffect(() => {
+        async function checkStatus() {
+            if (!eventId) return;
+            try {
+                setCheckingStatus(true);
+                const status = await checkEventRegistrationStatus(eventId);
+                console.log("Registration status:", status);
+                setRegistrationStatus(status);
+
+                if (status.attendanceStatus === "PARTIALLY_REGISTERED" && eventData?.strictLocationValidation && !isPollingForUpgrade) {
+                    startAutoUpgradePolling();
+                }
+                if (
+                    status.isRegistered &&
+                    ["REGISTERED", "LATE", "PRESENT", "IDLE"].includes(status.attendanceStatus || "") &&
+                    eventData?.attendanceLocationMonitoringEnabled &&
+                    eventData?.venueLocationId &&
+                    !isTrackingThisEvent
+                ) {
+                    console.log("Resuming tracking for registered student");
+                    startTracking(eventId, eventData.venueLocationId);
+                }
+            } catch (error) {
+                console.error("Failed to check registration:", error);
+            } finally {
+                setCheckingStatus(false);
+            }
+        }
+
+        if (eventData) {
+            checkStatus();
+        }
+    }, [
+        eventId,
+        eventData?.strictLocationValidation,
+        eventData?.attendanceLocationMonitoringEnabled,
+        eventData?.venueLocationId,
+        eventData,
+        isPollingForUpgrade,
+        isTrackingThisEvent,
+        startTracking,
+        startAutoUpgradePolling,
+    ]);
 
     const onRefresh = useCallback(async () => {
         setRefreshing(true);
@@ -208,51 +211,69 @@ export default function EventDetailsRegistrationScreen() {
         setTimeout(() => setRefreshing(false), 500);
     }, [eventId, strictLocationValidation, isPollingForUpgrade, startAutoUpgradePolling, stopAutoUpgradePolling]);
 
-    const handleRegister = async (faceData?: string) => {
-        if (registrationInProgressRef.current) {
-            console.log("Registration already in progress, skipping...");
-            return;
-        }
-
-        if (locationLoading || latitude === null || longitude === null) {
-            Alert.alert("Location Required", "Waiting for location data. Please ensure location services are enabled.");
-            return;
-        }
-
-        if (isFullyRegistered || isPartiallyRegistered) {
-            console.log("Already registered, skipping...");
-            return;
-        }
-
-        if (requireFace && !faceData) {
-            router.push({
-                pathname: "/(routes)/(biometrics)/verification",
-                params: { eventId },
-            });
-            return;
-        }
-
-        registrationInProgressRef.current = true;
-
-        performRegistration(faceData || null, async () => {
-            try {
-                const updatedStatus = await checkEventRegistrationStatus(eventId);
-                setRegistrationStatus(updatedStatus);
-
-                if (updatedStatus.attendanceStatus === "PARTIALLY_REGISTERED" && strictLocationValidation) {
-                    startAutoUpgradePolling();
-                } else if (shouldStartTracking && updatedStatus.isRegistered) {
-                    startTracking(eventId, eventData!.venueLocationId!);
-                }
-
-                Alert.alert("Success", updatedStatus.message);
-            } catch (error) {
-                console.error("Failed to refresh status after registration:", error);
-            } finally {
-                registrationInProgressRef.current = false;
+    const handleRegister = useCallback(
+        async (faceData?: string) => {
+            if (registrationInProgressRef.current) {
+                console.log("Registration already in progress, skipping...");
+                return;
             }
-        });
-    };
+
+            if (locationLoading || latitude === null || longitude === null) {
+                Alert.alert("Location Required", "Waiting for location data. Please ensure location services are enabled.");
+                return;
+            }
+
+            if (isFullyRegistered || isPartiallyRegistered) {
+                console.log("Already registered, skipping...");
+                return;
+            }
+
+            if (requireFace && !faceData) {
+                router.push({
+                    pathname: "/(routes)/(biometrics)/verification",
+                    params: { eventId },
+                });
+                return;
+            }
+
+            registrationInProgressRef.current = true;
+
+            performRegistration(faceData || null, async () => {
+                try {
+                    const updatedStatus = await checkEventRegistrationStatus(eventId);
+                    setRegistrationStatus(updatedStatus);
+
+                    if (updatedStatus.attendanceStatus === "PARTIALLY_REGISTERED" && strictLocationValidation) {
+                        startAutoUpgradePolling();
+                    } else if (shouldStartTracking && updatedStatus.isRegistered) {
+                        startTracking(eventId, eventData!.venueLocationId!);
+                    }
+
+                    Alert.alert("Success", updatedStatus.message);
+                } catch (error) {
+                    console.error("Failed to refresh status after registration:", error);
+                } finally {
+                    registrationInProgressRef.current = false;
+                }
+            });
+        },
+        [
+            locationLoading,
+            latitude,
+            longitude,
+            isFullyRegistered,
+            isPartiallyRegistered,
+            requireFace,
+            router,
+            eventId,
+            performRegistration,
+            strictLocationValidation,
+            shouldStartTracking,
+            startTracking,
+            eventData,
+            startAutoUpgradePolling,
+        ],
+    );
 
     useEffect(() => {
         if (
@@ -271,7 +292,7 @@ export default function EventDetailsRegistrationScreen() {
             faceProcessedRef.current = true;
             handleRegister(face);
         }
-    }, [face, latitude, longitude, loading, checkingStatus, requireFace, isFullyRegistered, isPartiallyRegistered, isAbsent, isExcused]);
+    }, [face, latitude, longitude, loading, checkingStatus, requireFace, isFullyRegistered, isPartiallyRegistered, isAbsent, isExcused, handleRegister]);
 
     useEffect(() => {
         faceProcessedRef.current = false;
@@ -315,6 +336,10 @@ export default function EventDetailsRegistrationScreen() {
     };
 
     if (loadingEvent) {
+        return <ActivityIndicator size="large" color="#2A2C24" />;
+    }
+
+    if (!eventId) {
         return <ActivityIndicator size="large" color="#2A2C24" />;
     }
 

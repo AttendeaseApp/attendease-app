@@ -1,7 +1,7 @@
 /**
  * Main entry point for the ATTENDEASE BACKEND SERVICE
  */
-export const API_BASE_URL = "https://attendease-backend-latest.onrender.com";
+export const API_BASE_URL = "http://rcattendease.online";
 
 /**
  * WebSocket Base URL
