@@ -1,9 +1,16 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState, useRef } from "react";
-import { StyleSheet, StatusBar, ActivityIndicator, RefreshControl, ScrollView, View, Alert } from "react-native";
+import {
+    StyleSheet,
+    StatusBar,
+    ActivityIndicator,
+    RefreshControl,
+    ScrollView,
+    View,
+    Alert,
+} from "react-native";
 import { Button, ButtonText } from "@/components/ui/button";
 import { ThemedText } from "@/components/ui/text/themed.text";
-import { useAttendanceTracking } from "@/store/attendance/tracking/attendance.tracking.context";
 import { Event } from "@/domain/interface/event/session/event.session";
 import { useEventRegistration } from "@/hooks/events/registration/useEventRegistration";
 import { subscribeToEventById } from "@/server/service/api/event/subscribe-to-event-by-id";
@@ -12,7 +19,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { verifyRegistrationLocation } from "@/server/service/api/geolocation/verify-registration-location";
 import { verifyVenueLocationWithAutoUpgrade } from "@/server/service/api/geolocation/verify-venue-location-with-auto-upgrade";
 import { LocationTrackingResponse } from "@/domain/interface/location/location-tracking-response";
-import { checkEventRegistrationStatus, RegistrationStatusResponse } from "@/server/service/api/event/registration/check-event-registration-status";
+import {
+    checkEventRegistrationStatus,
+    RegistrationStatusResponse,
+} from "@/server/service/api/event/registration/check-event-registration-status";
 
 interface LocationStatus {
     isInside: boolean;
@@ -30,37 +40,43 @@ export default function EventDetailsRegistrationScreen() {
     const eventId = params.eventId;
     const face = params.face;
 
-    const { trackingState, startTracking } = useAttendanceTracking();
-
     const [eventData, setEventData] = useState<Event | null>(null);
     const [loadingEvent, setLoadingEvent] = useState(true);
-    const [registrationStatus, setRegistrationStatus] = useState<RegistrationStatusResponse | null>(null);
+    const [registrationStatus, setRegistrationStatus] =
+        useState<RegistrationStatusResponse | null>(null);
     const [checkingStatus, setCheckingStatus] = useState(true);
-    const [locationStatus, setLocationStatus] = useState<LocationStatus | null>(null);
+    const [locationStatus, setLocationStatus] = useState<LocationStatus | null>(
+        null,
+    );
     const [refreshing, setRefreshing] = useState(false);
     const [isPollingForUpgrade, setIsPollingForUpgrade] = useState(false);
-    const [autoUpgradeMessage, setAutoUpgradeMessage] = useState<string | null>(null);
+    const [autoUpgradeMessage, setAutoUpgradeMessage] = useState<string | null>(
+        null,
+    );
 
-    const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+        null,
+    );
     const registrationInProgressRef = useRef(false);
     const faceProcessedRef = useRef(false);
 
-    const { latitude, longitude, loading, locationLoading, register: performRegistration } = useEventRegistration(eventId || "");
-
-    const isTrackingThisEvent = trackingState.isTracking && trackingState.eventId === eventId;
-
-    // registration state based on statuses
-    const isFullyRegistered = registrationStatus?.isRegistered && ["REGISTERED", "LATE", "PRESENT", "IDLE"].includes(registrationStatus.attendanceStatus || "");
-    const isPartiallyRegistered = registrationStatus?.isRegistered && registrationStatus.attendanceStatus === "PARTIALLY_REGISTERED";
-    const isAbsent = registrationStatus?.isRegistered && registrationStatus.attendanceStatus === "ABSENT";
-    const isExcused = registrationStatus?.isRegistered && registrationStatus.attendanceStatus === "EXCUSED";
+    const {
+        latitude,
+        longitude,
+        loading,
+        locationLoading,
+        register: performRegistration,
+    } = useEventRegistration(eventId || "");
 
     // event configs
     const facialEnabled = eventData?.facialVerificationEnabled ?? true;
-    const attendanceMonitoringEnabled = eventData?.attendanceLocationMonitoringEnabled ?? true;
-    const strictLocationValidation = eventData?.strictLocationValidation ?? false;
+    const attendanceMonitoringEnabled =
+        eventData?.attendanceLocationMonitoringEnabled ?? true;
+    const strictLocationValidation =
+        eventData?.strictLocationValidation ?? false;
     const requireFace = facialEnabled && !attendanceMonitoringEnabled;
-    const shouldStartTracking = attendanceMonitoringEnabled && eventData?.venueLocationId;
+    const shouldStartTracking =
+        attendanceMonitoringEnabled && eventData?.venueLocationId;
 
     const eventFetchingSubscription = useCallback(async () => {
         setLoadingEvent(true);
@@ -82,12 +98,17 @@ export default function EventDetailsRegistrationScreen() {
         let unsubscribe: any;
         async function setup() {
             if (latitude === null || longitude === null || !eventId) return;
-            unsubscribe = await verifyRegistrationLocation(eventId, latitude, longitude, (response: LocationTrackingResponse) => {
-                setLocationStatus({
-                    isInside: response.inside,
-                    message: response.message,
-                });
-            });
+            unsubscribe = await verifyRegistrationLocation(
+                eventId,
+                latitude,
+                longitude,
+                (response: LocationTrackingResponse) => {
+                    setLocationStatus({
+                        isInside: response.inside,
+                        message: response.message,
+                    });
+                },
+            );
         }
 
         setup();
@@ -109,39 +130,51 @@ export default function EventDetailsRegistrationScreen() {
         }
 
         setIsPollingForUpgrade(true);
-        setAutoUpgradeMessage("Walking to venue? We'll automatically check you in when you arrive!");
+        setAutoUpgradeMessage(
+            "Walking to venue? We'll automatically check you in when you arrive!",
+        );
 
         pollingIntervalRef.current = setInterval(async () => {
             if (latitude === null || longitude === null) return;
 
             try {
-                const unsubscribe = await verifyVenueLocationWithAutoUpgrade(eventId, latitude, longitude, async (response: LocationTrackingResponse) => {
-                    if (response.autoUpgraded) {
-                        stopAutoUpgradePolling();
-                        Alert.alert("Registration Completed!", response.message, [
-                            {
-                                text: "Ok",
-                                onPress: async () => {
-                                    const updatedStatus = await checkEventRegistrationStatus(eventId);
-                                    setRegistrationStatus(updatedStatus);
+                const unsubscribe = await verifyVenueLocationWithAutoUpgrade(
+                    eventId,
+                    latitude,
+                    longitude,
+                    async (response: LocationTrackingResponse) => {
+                        if (response.autoUpgraded) {
+                            stopAutoUpgradePolling();
+                            Alert.alert(
+                                "Registration Completed!",
+                                response.message,
+                                [
+                                    {
+                                        text: "Ok",
+                                        onPress: async () => {
+                                            const updatedStatus =
+                                                await checkEventRegistrationStatus(
+                                                    eventId,
+                                                );
+                                            setRegistrationStatus(
+                                                updatedStatus,
+                                            );
+                                        },
+                                    },
+                                ],
+                            );
+                        } else if (response.inside) {
+                            stopAutoUpgradePolling();
+                        }
 
-                                    if (shouldStartTracking) {
-                                        startTracking(eventId, eventData!.venueLocationId!);
-                                    }
-                                },
-                            },
-                        ]);
-                    } else if (response.inside) {
-                        stopAutoUpgradePolling();
-                    }
-
-                    unsubscribe?.unsubscribe?.();
-                });
+                        unsubscribe?.unsubscribe?.();
+                    },
+                );
             } catch (error) {
                 console.error("Auto-upgrade check failed:", error);
             }
         }, 10000);
-    }, [eventId, latitude, longitude, eventData, shouldStartTracking, startTracking, stopAutoUpgradePolling]);
+    }, [eventId, latitude, longitude, stopAutoUpgradePolling]);
 
     useEffect(() => {
         return () => {
@@ -158,18 +191,22 @@ export default function EventDetailsRegistrationScreen() {
                 console.log("Registration status:", status);
                 setRegistrationStatus(status);
 
-                if (status.attendanceStatus === "PARTIALLY_REGISTERED" && eventData?.strictLocationValidation && !isPollingForUpgrade) {
+                if (
+                    status.attendanceStatus === "PARTIALLY_REGISTERED" &&
+                    eventData?.strictLocationValidation &&
+                    !isPollingForUpgrade
+                ) {
                     startAutoUpgradePolling();
                 }
                 if (
                     status.isRegistered &&
-                    ["REGISTERED", "LATE", "PRESENT", "IDLE"].includes(status.attendanceStatus || "") &&
+                    ["REGISTERED", "LATE", "PRESENT", "IDLE"].includes(
+                        status.attendanceStatus || "",
+                    ) &&
                     eventData?.attendanceLocationMonitoringEnabled &&
-                    eventData?.venueLocationId &&
-                    !isTrackingThisEvent
+                    eventData?.venueLocationId
                 ) {
                     console.log("Resuming tracking for registered student");
-                    startTracking(eventId, eventData.venueLocationId);
                 }
             } catch (error) {
                 console.error("Failed to check registration:", error);
@@ -188,8 +225,6 @@ export default function EventDetailsRegistrationScreen() {
         eventData?.venueLocationId,
         eventData,
         isPollingForUpgrade,
-        isTrackingThisEvent,
-        startTracking,
         startAutoUpgradePolling,
     ]);
 
@@ -199,9 +234,16 @@ export default function EventDetailsRegistrationScreen() {
             const status = await checkEventRegistrationStatus(eventId);
             setRegistrationStatus(status);
 
-            if (status.attendanceStatus === "PARTIALLY_REGISTERED" && strictLocationValidation && !isPollingForUpgrade) {
+            if (
+                status.attendanceStatus === "PARTIALLY_REGISTERED" &&
+                strictLocationValidation &&
+                !isPollingForUpgrade
+            ) {
                 startAutoUpgradePolling();
-            } else if (status.attendanceStatus !== "PARTIALLY_REGISTERED" && isPollingForUpgrade) {
+            } else if (
+                status.attendanceStatus !== "PARTIALLY_REGISTERED" &&
+                isPollingForUpgrade
+            ) {
                 stopAutoUpgradePolling();
             }
         } catch (error) {
@@ -209,7 +251,13 @@ export default function EventDetailsRegistrationScreen() {
         }
 
         setTimeout(() => setRefreshing(false), 500);
-    }, [eventId, strictLocationValidation, isPollingForUpgrade, startAutoUpgradePolling, stopAutoUpgradePolling]);
+    }, [
+        eventId,
+        strictLocationValidation,
+        isPollingForUpgrade,
+        startAutoUpgradePolling,
+        stopAutoUpgradePolling,
+    ]);
 
     const handleRegister = useCallback(
         async (faceData?: string) => {
@@ -219,12 +267,10 @@ export default function EventDetailsRegistrationScreen() {
             }
 
             if (locationLoading || latitude === null || longitude === null) {
-                Alert.alert("Location Required", "Waiting for location data. Please ensure location services are enabled.");
-                return;
-            }
-
-            if (isFullyRegistered || isPartiallyRegistered) {
-                console.log("Already registered, skipping...");
+                Alert.alert(
+                    "Location Required",
+                    "Waiting for location data. Please ensure location services are enabled.",
+                );
                 return;
             }
 
@@ -240,18 +286,26 @@ export default function EventDetailsRegistrationScreen() {
 
             performRegistration(faceData || null, async () => {
                 try {
-                    const updatedStatus = await checkEventRegistrationStatus(eventId);
+                    const updatedStatus =
+                        await checkEventRegistrationStatus(eventId);
                     setRegistrationStatus(updatedStatus);
 
-                    if (updatedStatus.attendanceStatus === "PARTIALLY_REGISTERED" && strictLocationValidation) {
+                    if (
+                        updatedStatus.attendanceStatus ===
+                            "PARTIALLY_REGISTERED" &&
+                        strictLocationValidation
+                    ) {
                         startAutoUpgradePolling();
-                    } else if (shouldStartTracking && updatedStatus.isRegistered) {
-                        startTracking(eventId, eventData!.venueLocationId!);
-                    }
-
-                    Alert.alert("Success", updatedStatus.message);
+                    } else if (
+                        shouldStartTracking &&
+                        updatedStatus.isRegistered
+                    )
+                        Alert.alert("Success", updatedStatus.message);
                 } catch (error) {
-                    console.error("Failed to refresh status after registration:", error);
+                    console.error(
+                        "Failed to refresh status after registration:",
+                        error,
+                    );
                 } finally {
                     registrationInProgressRef.current = false;
                 }
@@ -261,16 +315,12 @@ export default function EventDetailsRegistrationScreen() {
             locationLoading,
             latitude,
             longitude,
-            isFullyRegistered,
-            isPartiallyRegistered,
             requireFace,
             router,
             eventId,
             performRegistration,
             strictLocationValidation,
             shouldStartTracking,
-            startTracking,
-            eventData,
             startAutoUpgradePolling,
         ],
     );
@@ -283,53 +333,35 @@ export default function EventDetailsRegistrationScreen() {
             longitude !== null &&
             !loading &&
             !checkingStatus &&
-            requireFace &&
-            !isFullyRegistered &&
-            !isPartiallyRegistered &&
-            !isAbsent &&
-            !isExcused
+            requireFace
         ) {
             faceProcessedRef.current = true;
             handleRegister(face);
         }
-    }, [face, latitude, longitude, loading, checkingStatus, requireFace, isFullyRegistered, isPartiallyRegistered, isAbsent, isExcused, handleRegister]);
+    }, [
+        face,
+        latitude,
+        longitude,
+        loading,
+        checkingStatus,
+        requireFace,
+        handleRegister,
+    ]);
 
     useEffect(() => {
         faceProcessedRef.current = false;
     }, [eventId]);
 
     const renderRegistrationButton = () => {
-        if (isFullyRegistered) {
-            const buttonText = registrationStatus?.attendanceStatus === "PRESENT" ? "Attended" : registrationStatus?.attendanceStatus === "LATE" ? "Registered (Late)" : "Registered";
-
-            return (
-                <Button disabled style={styles.successButton}>
-                    <ButtonText>{buttonText}</ButtonText>
-                </Button>
-            );
-        }
-
-        if (isPartiallyRegistered) {
-            return (
-                <Button disabled style={styles.secondaryButton}>
-                    <ButtonText>{isPollingForUpgrade ? "Waiting for venue check-in..." : "Proceed to Venue"}</ButtonText>
-                </Button>
-            );
-        }
-
-        if (isAbsent || isExcused) {
-            return (
-                <Button disabled style={styles.infoButton}>
-                    <ButtonText>{registrationStatus?.message || "Marked as Absent"}</ButtonText>
-                </Button>
-            );
-        }
-
-        const isDisabled = checkingStatus || loading || locationLoading || latitude === null || longitude === null || eventData?.eventStatus !== "ONGOING" || registrationInProgressRef.current;
-        const buttonText = loading || registrationInProgressRef.current ? "REGISTERING..." : requireFace ? "VERIFY & REGISTER" : "REGISTER";
+        const buttonText =
+            loading || registrationInProgressRef.current
+                ? "REGISTERING..."
+                : requireFace
+                  ? "VERIFY & REGISTER"
+                  : "REGISTER";
 
         return (
-            <Button onPress={() => handleRegister()} disabled={isDisabled}>
+            <Button onPress={() => handleRegister()}>
                 <ButtonText>{buttonText}</ButtonText>
             </Button>
         );
@@ -346,32 +378,66 @@ export default function EventDetailsRegistrationScreen() {
     return (
         <SafeAreaView style={{ flex: 1 }}>
             <StatusBar barStyle="dark-content" />
-            <ScrollView contentContainerStyle={{ paddingBottom: 180 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
+            <ScrollView
+                contentContainerStyle={{ paddingBottom: 180 }}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                    />
+                }
+            >
                 <View style={styles.contentWrapper}>
                     {/* Event Status */}
                     <View style={styles.infoSection}>
-                        <ThemedText type="defaultSemiBold">{eventData?.eventStatus || "N/A"}</ThemedText>
+                        <ThemedText type="defaultSemiBold">
+                            {eventData?.eventStatus || "N/A"}
+                        </ThemedText>
                     </View>
 
                     {/* Event Name */}
                     <View style={styles.infoSection}>
-                        <ThemedText type="loginTitle">{eventData?.eventName || "N/A"}</ThemedText>
+                        <ThemedText type="loginTitle">
+                            {eventData?.eventName || "N/A"}
+                        </ThemedText>
                     </View>
 
                     {/* Registration Status Badge */}
                     {registrationStatus?.isRegistered && (
-                        <View style={[styles.statusBadge, isPartiallyRegistered && styles.partialBadge, isFullyRegistered && styles.successBadge, (isAbsent || isExcused) && styles.infoBadge]}>
-                            <ThemedText type="defaultSemiBold" style={styles.statusText}>
+                        <View
+                            style={[
+                                styles.statusBadge,
+                                styles.partialBadge,
+                                styles.successBadge,
+                                styles.infoBadge,
+                            ]}
+                        >
+                            <ThemedText
+                                type="defaultSemiBold"
+                                style={styles.statusText}
+                            >
                                 {registrationStatus.message}
                             </ThemedText>
                             {registrationStatus.registrationTime && (
-                                <ThemedText type="default" style={styles.statusSubtext}>
-                                    Registered: {formatDateTime(registrationStatus.registrationTime)}
+                                <ThemedText
+                                    type="default"
+                                    style={styles.statusSubtext}
+                                >
+                                    Registered:{" "}
+                                    {formatDateTime(
+                                        registrationStatus.registrationTime,
+                                    )}
                                 </ThemedText>
                             )}
                             {registrationStatus.registrationLocationName && (
-                                <ThemedText type="default" style={styles.statusSubtext}>
-                                    Location: {registrationStatus.registrationLocationName}
+                                <ThemedText
+                                    type="default"
+                                    style={styles.statusSubtext}
+                                >
+                                    Location:{" "}
+                                    {
+                                        registrationStatus.registrationLocationName
+                                    }
                                 </ThemedText>
                             )}
                         </View>
@@ -379,45 +445,95 @@ export default function EventDetailsRegistrationScreen() {
 
                     {/* Description */}
                     <View style={styles.infoSection}>
-                        <ThemedText type="defaultSemiBold">Description</ThemedText>
-                        <ThemedText type="default">{eventData?.description || "N/A"}</ThemedText>
+                        <ThemedText type="defaultSemiBold">
+                            Description
+                        </ThemedText>
+                        <ThemedText type="default">
+                            {eventData?.description || "N/A"}
+                        </ThemedText>
                     </View>
 
                     {/* Schedule */}
                     <View style={styles.infoSection}>
-                        <ThemedText type="default">Registration starts at exactly {formatDateTime(eventData?.registrationDateTime)}.</ThemedText>
                         <ThemedText type="default">
-                            The event will then proceed to start on {formatDateTime(eventData?.startingDateTime)} and will end on {formatDateTime(eventData?.endingDateTime)}.
+                            Registration starts at exactly{" "}
+                            {formatDateTime(eventData?.registrationDateTime)}.
+                        </ThemedText>
+                        <ThemedText type="default">
+                            The event will then proceed to start on{" "}
+                            {formatDateTime(eventData?.startingDateTime)} and
+                            will end on{" "}
+                            {formatDateTime(eventData?.endingDateTime)}.
                         </ThemedText>
                     </View>
 
                     {/* Eligibility */}
                     <View style={styles.infoSection}>
-                        <ThemedText type="defaultSemiBold">Eligibility</ThemedText>
+                        <ThemedText type="defaultSemiBold">
+                            Eligibility
+                        </ThemedText>
                         {eventData?.eligibleStudents ? (
                             <>
                                 {eventData.eligibleStudents.allStudents ? (
-                                    <ThemedText type="default">Open to all students</ThemedText>
+                                    <ThemedText type="default">
+                                        Open to all students
+                                    </ThemedText>
                                 ) : (
                                     <View style={{ gap: 8 }}>
-                                        {eventData.eligibleStudents.cluster?.length && eventData.eligibleStudents.cluster.length > 0 && (
-                                            <View>
-                                                <ThemedText type="defaultSemiBold">Clusters</ThemedText>
-                                                <ThemedText type="default">{eventData.eligibleStudents.clusterNames?.join(", ") || eventData.eligibleStudents.cluster?.join(", ")}</ThemedText>
-                                            </View>
-                                        )}
-                                        {eventData.eligibleStudents.course?.length && eventData.eligibleStudents.course.length > 0 && (
-                                            <View>
-                                                <ThemedText type="defaultSemiBold">Courses</ThemedText>
-                                                <ThemedText type="default">{eventData.eligibleStudents.courseNames?.join(", ") || eventData.eligibleStudents.course?.join(", ")}</ThemedText>
-                                            </View>
-                                        )}
-                                        {eventData.eligibleStudents.sections?.length && eventData.eligibleStudents.sections.length > 0 && (
-                                            <View>
-                                                <ThemedText type="default">Sections</ThemedText>
-                                                <ThemedText type="defaultSemiBold">{eventData.eligibleStudents.sectionNames?.join(", ") || eventData.eligibleStudents.sections?.join(", ")}</ThemedText>
-                                            </View>
-                                        )}
+                                        {eventData.eligibleStudents.cluster
+                                            ?.length &&
+                                            eventData.eligibleStudents.cluster
+                                                .length > 0 && (
+                                                <View>
+                                                    <ThemedText type="defaultSemiBold">
+                                                        Clusters
+                                                    </ThemedText>
+                                                    <ThemedText type="default">
+                                                        {eventData.eligibleStudents.clusterNames?.join(
+                                                            ", ",
+                                                        ) ||
+                                                            eventData.eligibleStudents.cluster?.join(
+                                                                ", ",
+                                                            )}
+                                                    </ThemedText>
+                                                </View>
+                                            )}
+                                        {eventData.eligibleStudents.course
+                                            ?.length &&
+                                            eventData.eligibleStudents.course
+                                                .length > 0 && (
+                                                <View>
+                                                    <ThemedText type="defaultSemiBold">
+                                                        Courses
+                                                    </ThemedText>
+                                                    <ThemedText type="default">
+                                                        {eventData.eligibleStudents.courseNames?.join(
+                                                            ", ",
+                                                        ) ||
+                                                            eventData.eligibleStudents.course?.join(
+                                                                ", ",
+                                                            )}
+                                                    </ThemedText>
+                                                </View>
+                                            )}
+                                        {eventData.eligibleStudents.sections
+                                            ?.length &&
+                                            eventData.eligibleStudents.sections
+                                                .length > 0 && (
+                                                <View>
+                                                    <ThemedText type="default">
+                                                        Sections
+                                                    </ThemedText>
+                                                    <ThemedText type="defaultSemiBold">
+                                                        {eventData.eligibleStudents.sectionNames?.join(
+                                                            ", ",
+                                                        ) ||
+                                                            eventData.eligibleStudents.sections?.join(
+                                                                ", ",
+                                                            )}
+                                                    </ThemedText>
+                                                </View>
+                                            )}
                                     </View>
                                 )}
                             </>
@@ -429,7 +545,9 @@ export default function EventDetailsRegistrationScreen() {
                     {/* Strict Location Validation Info */}
                     {strictLocationValidation && (
                         <View style={styles.infoSection}>
-                            <ThemedText type="defaultSemiBold">Registration Process</ThemedText>
+                            <ThemedText type="defaultSemiBold">
+                                Registration Process
+                            </ThemedText>
                             <ThemedText type="default">
                                 This event uses two-step registration:{"\n"}
                                 1. Check in at registration area{"\n"}
@@ -440,43 +558,73 @@ export default function EventDetailsRegistrationScreen() {
 
                     {/* Facial & Attendance */}
                     <View style={styles.infoSection}>
-                        <ThemedText type="defaultSemiBold">Facial Verification</ThemedText>
-                        <ThemedText type="default">{facialEnabled ? "Required" : "Not Required"}</ThemedText>
+                        <ThemedText type="defaultSemiBold">
+                            Facial Verification
+                        </ThemedText>
+                        <ThemedText type="default">
+                            {facialEnabled ? "Required" : "Not Required"}
+                        </ThemedText>
                     </View>
 
                     <View style={styles.infoSection}>
-                        <ThemedText type="defaultSemiBold">Attendance Monitoring</ThemedText>
-                        <ThemedText type="default">{attendanceMonitoringEnabled ? "Required" : "Not Required"}</ThemedText>
+                        <ThemedText type="defaultSemiBold">
+                            Attendance Monitoring
+                        </ThemedText>
+                        <ThemedText type="default">
+                            {attendanceMonitoringEnabled
+                                ? "Required"
+                                : "Not Required"}
+                        </ThemedText>
                     </View>
 
                     {/* Locations */}
                     <View style={styles.infoSection}>
-                        <ThemedText type="defaultSemiBold">Registration Location</ThemedText>
+                        <ThemedText type="defaultSemiBold">
+                            Registration Location
+                        </ThemedText>
                         {eventData?.registrationLocation ? (
                             <ThemedText type="default">
-                                {eventData.registrationLocation.locationName || "Unavailable"}
-                                <ThemedText type="default" style={styles.environmentBadge}>
+                                {eventData.registrationLocation.locationName ||
+                                    "Unavailable"}
+                                <ThemedText
+                                    type="default"
+                                    style={styles.environmentBadge}
+                                >
                                     {" "}
-                                    • {eventData.registrationLocation.environment || "N/A"}
+                                    •{" "}
+                                    {eventData.registrationLocation
+                                        .environment || "N/A"}
                                 </ThemedText>
                             </ThemedText>
                         ) : (
-                            <ThemedText type="defaultSemiBold">Unavailable</ThemedText>
+                            <ThemedText type="defaultSemiBold">
+                                Unavailable
+                            </ThemedText>
                         )}
                     </View>
 
                     <View style={styles.infoSection}>
-                        <ThemedText type="defaultSemiBold">Event Venue</ThemedText>
+                        <ThemedText type="defaultSemiBold">
+                            Event Venue
+                        </ThemedText>
                         {eventData?.venueLocation ? (
                             <ThemedText type="default">
-                                {eventData.venueLocation.locationName || "Unavailable"}
-                                <ThemedText type="default" style={styles.environmentBadge}>
+                                {eventData.venueLocation.locationName ||
+                                    "Unavailable"}
+                                <ThemedText
+                                    type="default"
+                                    style={styles.environmentBadge}
+                                >
                                     {" "}
-                                    • {eventData.venueLocation.environment || "N/A"}
+                                    •{" "}
+                                    {eventData.venueLocation.environment ||
+                                        "N/A"}
                                 </ThemedText>
                             </ThemedText>
                         ) : (
-                            <ThemedText type="defaultSemiBold">Unavailable</ThemedText>
+                            <ThemedText type="defaultSemiBold">
+                                Unavailable
+                            </ThemedText>
                         )}
                     </View>
 
@@ -484,7 +632,10 @@ export default function EventDetailsRegistrationScreen() {
                     {isPollingForUpgrade && autoUpgradeMessage && (
                         <View style={styles.autoUpgradeContainer}>
                             <ActivityIndicator size="small" color="#2563eb" />
-                            <ThemedText type="default" style={styles.autoUpgradeText}>
+                            <ThemedText
+                                type="default"
+                                style={styles.autoUpgradeText}
+                            >
                                 {autoUpgradeMessage}
                             </ThemedText>
                         </View>
@@ -492,48 +643,77 @@ export default function EventDetailsRegistrationScreen() {
 
                     {/* Attendance Tracking Status */}
                     <View style={styles.eventRegistrationInfoSection}>
-                        {attendanceMonitoringEnabled ? (
+                        {/*{attendanceMonitoringEnabled ? (
                             <>
                                 {isTrackingThisEvent ? (
                                     <View style={styles.pingStatusContainer}>
-                                        {trackingState.eventStatus && <ThemedText type="default">{trackingState.eventStatus}</ThemedText>}
+                                        {trackingState.eventStatus && (
+                                            <ThemedText type="default">
+                                                {trackingState.eventStatus}
+                                            </ThemedText>
+                                        )}
                                         <ThemedText type="default">
-                                            {trackingState.eventStatus?.includes("ongoing")
+                                            {trackingState.eventStatus?.includes(
+                                                "ongoing",
+                                            )
                                                 ? "Pinging every 5 minutes while event is ongoing."
-                                                : trackingState.eventStatus?.includes("not started") || trackingState.eventStatus?.includes("registration")
+                                                : trackingState.eventStatus?.includes(
+                                                        "not started",
+                                                    ) ||
+                                                    trackingState.eventStatus?.includes(
+                                                        "registration",
+                                                    )
                                                   ? "Waiting for event to start before sending pings."
                                                   : "Monitoring event status..."}
                                         </ThemedText>
-                                        <ThemedText type="default" style={styles.lastPingText}>
-                                            Last successful ping: {trackingState.lastTrackingTime || "waiting for first ping..."}
+                                        <ThemedText
+                                            type="default"
+                                            style={styles.lastPingText}
+                                        >
+                                            Last successful ping:{" "}
+                                            {trackingState.lastTrackingTime ||
+                                                "waiting for first ping..."}
                                         </ThemedText>
                                     </View>
                                 ) : (
                                     <View style={styles.infoSection}>
-                                        <ThemedText type="defaultSemiBold">Attendance Tracking Status</ThemedText>
+                                        <ThemedText type="defaultSemiBold">
+                                            Attendance Tracking Status
+                                        </ThemedText>
                                         <ThemedText type="default">
-                                            {registrationStatus?.isRegistered ? "Tracking will begin when event starts." : "Inactive, click register below to begin tracking."}
+                                            {registrationStatus?.isRegistered
+                                                ? "Tracking will begin when event starts."
+                                                : "Inactive, click register below to begin tracking."}
                                         </ThemedText>
                                     </View>
                                 )}
                             </>
                         ) : (
                             <View style={styles.infoSection}>
-                                <ThemedText type="defaultSemiBold">Attendance Tracking</ThemedText>
-                                <ThemedText type="default">Location monitoring is not required for this event. Registration only.</ThemedText>
+                                <ThemedText type="defaultSemiBold">
+                                    Attendance Tracking
+                                </ThemedText>
+                                <ThemedText type="default">
+                                    Location monitoring is not required for this
+                                    event. Registration only.
+                                </ThemedText>
                             </View>
-                        )}
+                        )}*/}
 
                         {/* Location verification status */}
                         {locationStatus && (
                             <View style={styles.infoSection}>
-                                <ThemedText type="default">{locationStatus.message}</ThemedText>
+                                <ThemedText type="default">
+                                    {locationStatus.message}
+                                </ThemedText>
                             </View>
                         )}
                     </View>
                 </View>
             </ScrollView>
-            <View style={styles.fixedButtonContainer}>{renderRegistrationButton()}</View>
+            <View style={styles.fixedButtonContainer}>
+                {renderRegistrationButton()}
+            </View>
         </SafeAreaView>
     );
 }
