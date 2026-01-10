@@ -1,7 +1,7 @@
 /**
  * Main entry point for the ATTENDEASE BACKEND SERVICE
  */
-export const API_BASE_URL = "https://attendease-backend-latest.onrender.com";
+export const API_BASE_URL = "http://192.168.1.7:8082";
 
 /**
  * WebSocket Base URL
@@ -25,8 +25,11 @@ export const REGISTER_FACE = `${API_BASE_URL}/api/auth/biometrics/register-face-
  * - GET_EVENT_STATE_STATUS - Retrieves the current state of an event.
  */
 export const RETRIEVE_ONGOING_REGISTRATION_AND_ACTIVE_EVENTS = `${API_BASE_URL}/api/registration/events`;
-export const GET_EVENT_BY_ID = (id: string) => `${API_BASE_URL}/api/registration/events/${id}`;
-export const GET_EVENT_STATE_STATUS = (id: string) => `${API_BASE_URL}/api/registration/${id}/start-status`;
+export const GET_EVENT_BY_ID = (id: string) =>
+    `${API_BASE_URL}/api/registration/events/${id}`;
+export const GET_EVENT_STATE_STATUS = (id: string) =>
+    `${API_BASE_URL}/api/registration/${id}/start-status`;
+export const REST_EVENT_RETRIEVAL = `${API_BASE_URL}/api/student/event/homepage`;
 
 /**
  * EVENT REGISTRATION
@@ -39,7 +42,8 @@ export const GET_EVENT_STATE_STATUS = (id: string) => `${API_BASE_URL}/api/regis
 export const REGISTER_STUDENT_ON_EVENT_ENDPOINT = `${API_BASE_URL}/api/registration`;
 export const PING_ATTENDANCE_ENDPOINT = `${API_BASE_URL}/api/registration/ping`;
 export const CHECK_CURRENT_LOCATION = `${API_BASE_URL}/api/registration/check-location`;
-export const CHECK_ATTENDANCE_STATUS = (eventId: string) => `${API_BASE_URL}/api/student/event/registration/status/${eventId}`;
+export const CHECK_ATTENDANCE_STATUS = (eventId: string) =>
+    `${API_BASE_URL}/api/student/event/registration/status/${eventId}`;
 
 /**
  * USER PROFILE SERVICE

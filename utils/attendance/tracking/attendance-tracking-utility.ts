@@ -1,7 +1,7 @@
 import * as Location from "expo-location";
 import { Alert } from "react-native";
 import { attendanceTrackingService } from "@/server/service/api/attendance/tracking/attendance-tracking-service";
-import { useEventStatusCheck } from "../../../hooks/events/status/useEventStatusCheck";
+import { checkEventStatus } from "@/hooks/events/status/checkEventStatus";
 
 interface StartAttendanceTrackingParams {
     eventId: string;
@@ -26,7 +26,7 @@ export function useStartAttendanceTracking() {
 
         const trackingInterval = setInterval(async () => {
             try {
-                const statusResult = await useEventStatusCheck(eventId);
+                const statusResult = await checkEventStatus(eventId);
 
                 if (!statusResult.success || !statusResult.data) {
                     console.log("Failed to fetch event status, skipping ping");

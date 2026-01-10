@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   StyleSheet,
   StatusBar,
@@ -66,10 +66,10 @@ export default function ProfileScreen() {
     setIsLogoutDialogOpen(false);
   };
 
-  const handleSuccessOK = () => {
+  const handleSuccessOK = useCallback(() => {
     setIsSuccessDialogOpen(false);
     router.replace("/(routes)/login");
-  };
+  }, [router]);
 
   useEffect(() => {
     if (isLogoutDialogOpen) {
@@ -94,7 +94,7 @@ export default function ProfileScreen() {
         { cancelable: false },
       );
     }
-  }, [isSuccessDialogOpen]);
+  }, [isSuccessDialogOpen,handleSuccessOK]);
 
   if (loading) {
     return (

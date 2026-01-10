@@ -36,7 +36,7 @@ export default function ChangePasswordScreen() {
     };
 
     const validationError = validatePasswordForm();
-    const isFormValid = validationError;
+    const isFormValid = !validationError;
 
     const performPasswordUpdate = async () => {
         setLoading(true);
@@ -52,7 +52,10 @@ export default function ChangePasswordScreen() {
     };
 
     const handleSubmit = () => {
-        !isFormValid;
+        if (!isFormValid) {
+            Alert.alert("Validation Error", validationError || "Please check your input.");
+            return;
+        }
 
         Alert.alert("Confirm Password Change", "This will update your password. This action cannot be undone.", [
             { text: "Cancel", style: "cancel" },
