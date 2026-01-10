@@ -1,50 +1,68 @@
-# Welcome to your Expo app 👋
+# RCIANS ATTENDEASE Mobile Application
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+## Overview
 
-## Get started
+RCIANS ATTENDEASE is a comprehensive mobile for efficient 
+event tracking and student attendance verification.
 
-1. Install dependencies
+## System Requirements
 
-   ```bash
-   npm install
-   ```
+### Required Permissions
 
-2. Start the app
+The application requires the following device permissions to function properly:
 
-   ```bash
-    npx expo start
-   ```
+- **Camera Access** - For facial registration and verification 
+- **Location Services** - For attendance location monitoring and verification
+- **Internet Connection** - For real-time event updates and data synchronization
 
-In the output, you'll find options to open the app in a
+### Supported Platforms
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+- iOS 13.0 or higher
+- Android 8.0 (API level 26) or higher
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Installation
 
-## Get a fresh project
+### 1. Manual artifact download for now
 
-When you're ready, run:
+## Features
 
-```bash
-npm run reset-project
-```
+- **Real-time Event Feed** - WebSocket-powered live event updates
+- **Facial Verification** - Biometric attendance verification
+- **Location Monitoring** - GPS-based attendance validation
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Troubleshooting
 
-## Learn more
+### Common Issues
 
-To learn more about developing your project with Expo, look at the following resources:
+**WebSocket Connection Fails**
+- Verify backend server is running
+- Check URLs in environment variables
+- Ensure network connectivity
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+**Camera Permission Denied**
+- Grant camera permissions in device settings
+- Restart the application after granting permissions
 
-## Join the community
+**Location Services Unavailable**
+- Enable location services in device settings
+- Ensure GPS is turned on for outdoor events
 
-Join our community of developers creating universal apps.
+## Technologies Used
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- **React Native** - Cross-platform mobile framework
+- **Expo** - Development and build toolchain
+- **TypeScript** - Type-safe JavaScript
+- **STOMP.js** - WebSocket communication
+
+## Support
+
+For issues, please contact:
+- Email: attendease051@gmail.com
+- Or, submit issue on this repository
+
+© 2025 RCIANS ATTENDEASE.
+
+---
+
+**Version:** 1.0.0  
+**Last Updated:** January 2026

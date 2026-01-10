@@ -6,7 +6,6 @@ import {
     FlatList,
     View,
     RefreshControl,
-    Animated,
 } from "react-native";
 import { EventSessionCard } from "../cards/event.session.card";
 import { ThemedText } from "../ui/text/themed.text";
