@@ -22,11 +22,13 @@ function useProtectedRoute(authState: AuthState, router: any) {
      const segments = useSegments() as string[]
      useEffect(() => {
           if (authState.isLoading) return
+
           const inAuthGroup =
                segments[0] === "(routes)" && segments.length > 1 && segments[1] === "login"
           const inBiometricsGroup =
                segments[0] === "(routes)" && segments.length > 1 && segments[1] === "(biometrics)"
-          if (!authState.isLoggedIn && !inAuthGroup && !inBiometricsGroup) {
+          const inTabsGroup = segments[0] === "(tabs)"
+          if (!authState.isLoggedIn && !inAuthGroup && !inBiometricsGroup && !inTabsGroup) {
                router.replace("/(routes)/login")
           }
      }, [authState.isLoggedIn, authState.isLoading, segments, router])

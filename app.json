@@ -1,6 +1,6 @@
 {
      "expo": {
-          "name": "attendease-mobile-app",
+          "name": "Attendease",
           "slug": "attendease-mobile-app",
           "version": "1.0.0",
           "orientation": "portrait",
@@ -10,15 +10,13 @@
           "newArchEnabled": true,
           "ios": {
                "supportsTablet": true,
+               "bundleIdentifier": "com.attendease.app",
                "infoPlist": {
                     "NSCameraUsageDescription": "Allow camera access for facial registration."
                }
           },
           "android": {
-               "adaptiveIcon": {
-                    "foregroundImage": "./assets/images/adaptive-icon.png",
-                    "backgroundColor": "#ffffff"
-               },
+               "icon": "./assets/images/icon.png",
                "edgeToEdgeEnabled": true,
                "permissions": ["android.permission.CAMERA", "android.permission.RECORD_AUDIO"],
                "softwareKeyboardLayoutMode": "pan",
