@@ -3,7 +3,7 @@ import { CHECK_ATTENDANCE_STATUS } from "@/server/constants/endpoints"
 import { userAuthenticatedContextFetch } from "@/server/utils/user-authenticated-context-fetch"
 
 export interface RegistrationStatusResponse {
-     isRegistered: boolean
+     registered: boolean
      attendanceStatus: AttendanceStatusEnum
      registrationTime?: string
      attendanceRecordId?: string

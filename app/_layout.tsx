@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react"
 import { SplashScreen, Stack, useRouter, useSegments } from "expo-router"
 import { ThemeProvider } from "@/context/theme.context"
-// import { AttendanceTrackingProvider } from "@/store/attendance/tracking/attendance.tracking.context";
+import { AttendanceTrackingProvider } from "@/store/attendance/tracking/attendance.tracking.context"
 import { LogBox, Alert } from "react-native"
 import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider"
 import AsyncStorage from "@react-native-async-storage/async-storage"
@@ -22,11 +22,13 @@ function useProtectedRoute(authState: AuthState, router: any) {
      const segments = useSegments() as string[]
      useEffect(() => {
           if (authState.isLoading) return
+
           const inAuthGroup =
                segments[0] === "(routes)" && segments.length > 1 && segments[1] === "login"
           const inBiometricsGroup =
                segments[0] === "(routes)" && segments.length > 1 && segments[1] === "(biometrics)"
-          if (!authState.isLoggedIn && !inAuthGroup && !inBiometricsGroup) {
+          const inTabsGroup = segments[0] === "(tabs)"
+          if (!authState.isLoggedIn && !inAuthGroup && !inBiometricsGroup && !inTabsGroup) {
                router.replace("/(routes)/login")
           }
      }, [authState.isLoggedIn, authState.isLoading, segments, router])
@@ -178,7 +180,9 @@ export default function RootLayout() {
      return (
           <GluestackUIProvider mode="light">
                <ThemeProvider>
-                    <RootLayoutNav />
+                    <AttendanceTrackingProvider>
+                         <RootLayoutNav />
+                    </AttendanceTrackingProvider>
                </ThemeProvider>
           </GluestackUIProvider>
      )

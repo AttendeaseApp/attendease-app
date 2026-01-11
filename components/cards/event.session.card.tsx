@@ -11,6 +11,8 @@ import {
      checkEventRegistrationStatus,
      RegistrationStatusResponse,
 } from "@/server/service/api/event/registration/check-event-registration-status"
+import { AttendanceStatusEnum } from "@/domain/enums/attendance/status/attendance.status.enum"
+import { useEventStatusMonitoring } from "@/hooks/events/status/useEventStatus"
 
 interface EventCardProps {
      eventId: string
@@ -71,37 +73,37 @@ const getStatusStyle = (status: EventStatus) => {
 
 const getRegistrationStatusStyle = (attendanceStatus?: string) => {
      switch (attendanceStatus) {
-          case "REGISTERED":
-          case "PRESENT":
-          case "IDLE":
+          case AttendanceStatusEnum.REGISTERED:
+          case AttendanceStatusEnum.PRESENT:
+          case AttendanceStatusEnum.IDLE:
                return {
                     color: "#065F46",
                     backgroundColor: "#D1FAE5",
                     borderColor: "#10B981",
                     label: "Registered",
                }
-          case "LATE":
+          case AttendanceStatusEnum.LATE:
                return {
                     color: "#92400E",
                     backgroundColor: "#FEF3C7",
                     borderColor: "#F59E0B",
                     label: "Registered (Late)",
                }
-          case "PARTIALLY_REGISTERED":
+          case AttendanceStatusEnum.PARTIALLY_REGISTERED:
                return {
                     color: "#92400E",
                     backgroundColor: "#FEF3C7",
                     borderColor: "#F59E0B",
                     label: "Partially Registered",
                }
-          case "ABSENT":
+          case AttendanceStatusEnum.ABSENT:
                return {
                     color: "#991B1B",
                     backgroundColor: "#FEE2E2",
                     borderColor: "#EF4444",
                     label: "Absent",
                }
-          case "EXCUSED":
+          case AttendanceStatusEnum.EXCUSED:
                return {
                     color: "#1E40AF",
                     backgroundColor: "#DBEAFE",
@@ -129,6 +131,13 @@ export const EventSessionCard: React.FC<EventCardProps> = ({
      const [registrationStatus, setRegistrationStatus] =
           useState<RegistrationStatusResponse | null>(null)
      const [loadingStatus, setLoadingStatus] = useState(false)
+     const [currentEventStatus, setCurrentEventStatus] = useState(eventStatus)
+
+     const shouldMonitor = [EventStatus.REGISTRATION, EventStatus.ONGOING].includes(
+          currentEventStatus
+     )
+
+     const { eventState } = useEventStatusMonitoring(eventId, shouldMonitor)
 
      useEffect(() => {
           async function fetchRegistrationStatus() {
@@ -137,7 +146,7 @@ export const EventSessionCard: React.FC<EventCardProps> = ({
                          EventStatus.ONGOING,
                          EventStatus.REGISTRATION,
                          EventStatus.CONCLUDED,
-                    ].includes(eventStatus)
+                    ].includes(currentEventStatus)
                ) {
                     return
                }
@@ -151,9 +160,32 @@ export const EventSessionCard: React.FC<EventCardProps> = ({
                     setLoadingStatus(false)
                }
           }
-
           fetchRegistrationStatus()
-     }, [eventId, eventStatus])
+     }, [eventId, currentEventStatus])
+
+     useEffect(() => {
+          if (eventState) {
+               console.log(`[Card ${eventId}] Event state update:`, eventState.statusMessage)
+               if (eventState.eventHasEnded) {
+                    setCurrentEventStatus(EventStatus.CONCLUDED)
+               } else if (eventState.eventIsOngoing) {
+                    setCurrentEventStatus(EventStatus.ONGOING)
+               } else if (eventState.eventHasStarted) {
+                    setCurrentEventStatus(EventStatus.ONGOING)
+               } else {
+                    const message = eventState.statusMessage.toLowerCase()
+                    if (message.includes("registration")) {
+                         setCurrentEventStatus(EventStatus.REGISTRATION)
+                    } else if (message.includes("not started") || message.includes("upcoming")) {
+                         setCurrentEventStatus(EventStatus.UPCOMING)
+                    } else if (message.includes("cancelled")) {
+                         setCurrentEventStatus(EventStatus.CANCELLED)
+                    } else if (message.includes("completed") || message.includes("finalized")) {
+                         setCurrentEventStatus(EventStatus.FINALIZED)
+                    }
+               }
+          }
+     }, [eventState, eventId])
 
      const handleCardPress = async () => {
           router.push({
@@ -166,37 +198,31 @@ export const EventSessionCard: React.FC<EventCardProps> = ({
           })
      }
 
-     const statusStyle = getStatusStyle(eventStatus)
-     const registrationStatusStyle = registrationStatus?.isRegistered
+     const statusStyle = getStatusStyle(currentEventStatus)
+     const registrationStatusStyle = registrationStatus?.registered
           ? getRegistrationStatusStyle(registrationStatus.attendanceStatus)
           : null
 
      return (
           <TouchableOpacity style={styles.card} onPress={handleCardPress} activeOpacity={0.7}>
                <View style={styles.statusRow}>
-                    <ThemedText
-                         type="subtitle"
-                         style={[styles.statusText, { color: statusStyle.color }]}
-                    >
-                         {eventStatus}
-                    </ThemedText>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                         <ThemedText
+                              type="subtitle"
+                              style={[styles.statusText, { color: statusStyle.color }]}
+                         >
+                              {currentEventStatus}
+                         </ThemedText>
+                    </View>
 
                     {loadingStatus && (
-                         <View style={styles.registrationStatusBadge}>
+                         <View>
                               <ActivityIndicator size="small" color="#6B7280" />
                          </View>
                     )}
 
                     {!loadingStatus && registrationStatusStyle && (
-                         <View
-                              style={[
-                                   styles.registrationStatusBadge,
-                                   {
-                                        backgroundColor: registrationStatusStyle.backgroundColor,
-                                        borderColor: registrationStatusStyle.borderColor,
-                                   },
-                              ]}
-                         >
+                         <View>
                               <ThemedText
                                    type="default"
                                    style={[
@@ -215,27 +241,10 @@ export const EventSessionCard: React.FC<EventCardProps> = ({
                     {eventName}
                </ThemedText>
 
-               {/* Registration Status Details */}
-               {registrationStatus?.isRegistered && (
-                    <View style={styles.registrationDetailsContainer}>
-                         {registrationStatus.registrationTime && (
-                              <View style={styles.registrationDetailRow}>
-                                   <Octicons name="clock" size={12} color="#6B7280" />
-                                   <ThemedText type="default" style={styles.registrationDetailText}>
-                                        Registered:{" "}
-                                        {formatDateTime(registrationStatus.registrationTime)}
-                                   </ThemedText>
-                              </View>
-                         )}
-                         {registrationStatus.registrationLocationName && (
-                              <View style={styles.registrationDetailRow}>
-                                   <Octicons name="location" size={12} color="#6B7280" />
-                                   <ThemedText type="default" style={styles.registrationDetailText}>
-                                        {registrationStatus.registrationLocationName}
-                                   </ThemedText>
-                              </View>
-                         )}
-                         {registrationStatus.attendanceStatus === "PARTIALLY_REGISTERED" && (
+               {registrationStatus?.registered && (
+                    <View>
+                         {registrationStatus.attendanceStatus ===
+                              AttendanceStatusEnum.PARTIALLY_REGISTERED && (
                               <View style={styles.partialRegistrationWarning}>
                                    <Octicons name="alert" size={12} color="#F59E0B" />
                                    <ThemedText
@@ -344,9 +353,7 @@ export const EventSessionCard: React.FC<EventCardProps> = ({
                <View style={styles.buttonContainer}>
                     <Button action="secondary" size="xs" onPress={handleCardPress}>
                          <ThemedText type="default">
-                              {registrationStatus?.isRegistered
-                                   ? "View Details"
-                                   : "View & Register"}
+                              {registrationStatus?.registered ? "View Details" : "View & Register"}
                          </ThemedText>
                          <ButtonText>
                               <Octicons name="arrow-right" />
@@ -376,14 +383,26 @@ const styles = StyleSheet.create({
           textTransform: "uppercase",
           letterSpacing: 0.5,
      },
-     registrationStatusBadge: {
-          paddingHorizontal: 8,
-          paddingVertical: 4,
+     liveIndicator: {
+          width: 8,
+          height: 8,
           borderRadius: 4,
-          borderWidth: 1,
-          flexDirection: "row",
-          alignItems: "center",
-          gap: 4,
+          backgroundColor: "#10B981",
+          shadowColor: "#10B981",
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 0.5,
+          shadowRadius: 4,
+     },
+     pulseDot: {
+          width: 8,
+          height: 8,
+          borderRadius: 4,
+          backgroundColor: "#10B981",
+     },
+     eventStateText: {
+          fontSize: 12,
+          color: "#1E40AF",
+          flex: 1,
      },
      registrationStatusText: {
           fontSize: 11,
@@ -393,13 +412,6 @@ const styles = StyleSheet.create({
      },
      eventName: {
           marginBlock: 11,
-     },
-     registrationDetailsContainer: {
-          marginBottom: 12,
-          padding: 12,
-          backgroundColor: "#F9FAFB",
-          borderRadius: 6,
-          gap: 6,
      },
      registrationDetailRow: {
           flexDirection: "row",

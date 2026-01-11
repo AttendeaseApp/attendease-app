@@ -59,7 +59,10 @@ export default function OneTimeFacialRegistrationScreen() {
                     {
                          label: "Skip",
                          action: async () => {
-                              await AsyncStorage.setItem("facialRegistrationSkipped", "true")
+                              await AsyncStorage.setItem(
+                                   "skippedFacialRegistration",
+                                   Date.now().toString()
+                              )
                               router.replace("/(tabs)")
                          },
                     },
@@ -97,7 +100,10 @@ export default function OneTimeFacialRegistrationScreen() {
                          {
                               label: "Skip",
                               action: async () => {
-                                   await AsyncStorage.setItem("skippedFacialRegistration", "true")
+                                   await AsyncStorage.setItem(
+                                        "skippedFacialRegistration",
+                                        Date.now().toString()
+                                   )
                                    router.replace("/(tabs)")
                               },
                          },
@@ -367,6 +373,7 @@ export default function OneTimeFacialRegistrationScreen() {
                          <Button
                               action="primary"
                               variant="solid"
+                              size="lg"
                               onPress={captureImage}
                               disabled={isProcessing || isCaptureComplete}
                               style={{
@@ -387,9 +394,10 @@ export default function OneTimeFacialRegistrationScreen() {
 
                     <View style={{ marginTop: 12, alignItems: "center" }}>
                          <Button
-                              action="secondary"
+                              action="primary"
                               variant="outline"
                               onPress={skipFacialRegistration}
+                              size="lg"
                          >
                               <ButtonText>Skip Facial Registration</ButtonText>
                          </Button>

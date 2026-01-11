@@ -4,8 +4,15 @@ import { CheckIcon } from "@/components/ui/icon"
 import { ThemedText } from "@/components/ui/text/themed.text"
 import { Ionicons } from "@expo/vector-icons"
 import { useLocalSearchParams, useRouter } from "expo-router"
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { StyleSheet, View } from "react-native"
+import Animated, {
+     useSharedValue,
+     useAnimatedStyle,
+     withTiming,
+     withSpring,
+     Easing,
+} from "react-native-reanimated"
 
 const TOTAL_STEPS = 3
 
@@ -42,96 +49,157 @@ const PAGES = [
 
 export default function OnboardingScreen() {
      const router = useRouter()
-
      const { studentNumber } = useLocalSearchParams<{ studentNumber: string }>()
 
      const [currentIndex, setCurrentIndex] = useState(0)
      const [termsAccepted, setTermsAccepted] = useState(false)
+     const opacity = useSharedValue(1)
+     const scale = useSharedValue(1)
+
      const currentPage = PAGES[currentIndex]
+
+     useEffect(() => {
+          opacity.value = withTiming(1, { duration: 400 })
+          scale.value = withSpring(1, { damping: 15, stiffness: 100 })
+     }, [currentIndex, opacity, scale])
+
      const handleNext = () => {
           if (currentIndex === 1 && !termsAccepted) return
 
-          if (currentIndex < TOTAL_STEPS - 1) {
-               setCurrentIndex((prev) => prev + 1)
-          } else {
-               router.replace({
-                    pathname: "/(routes)/(biometrics)/registration",
-                    params: { studentNumber: studentNumber || "" },
-               })
-          }
+          opacity.value = withTiming(0, { duration: 200 })
+          scale.value = withTiming(0.95, { duration: 200 })
+
+          setTimeout(() => {
+               if (currentIndex < TOTAL_STEPS - 1) {
+                    setCurrentIndex((prev) => prev + 1)
+               } else {
+                    router.replace({
+                         pathname: "/(routes)/(biometrics)/registration",
+                         params: { studentNumber: studentNumber || "" },
+                    })
+               }
+          }, 200)
      }
 
      const handleBack = () => {
           if (currentIndex === 0) return
-          setCurrentIndex((prev) => prev - 1)
+
+          opacity.value = withTiming(0, { duration: 200 })
+          scale.value = withTiming(0.95, { duration: 200 })
+
+          setTimeout(() => {
+               setCurrentIndex((prev) => prev - 1)
+          }, 200)
      }
+
+     const animatedStyle = useAnimatedStyle(() => ({
+          opacity: opacity.value,
+          transform: [{ scale: scale.value }],
+     }))
+
+     const progressBarStyle = useAnimatedStyle(() => ({
+          width: withTiming(`${((currentIndex + 1) / TOTAL_STEPS) * 100}%`, {
+               duration: 300,
+               easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+          }),
+     }))
 
      return (
           <View style={styles.container}>
                <View style={styles.header}>
-                    <ThemedText type="default">
-                         Step {currentIndex + 1} of {TOTAL_STEPS}
-                    </ThemedText>
+                    <View style={styles.progressContainer}>
+                         <ThemedText type="default" style={styles.stepText}>
+                              Step {currentIndex + 1} of {TOTAL_STEPS}
+                         </ThemedText>
+                         <View style={styles.progressBarBackground}>
+                              <Animated.View style={[styles.progressBarFill, progressBarStyle]} />
+                         </View>
+                    </View>
                </View>
-               <View style={styles.center}>
-                    <View style={styles.page}>
-                         <View style={styles.iconWrapper}>
+
+               {/* Content */}
+               <View style={styles.contentContainer}>
+                    <Animated.View style={[styles.pageWrapper, animatedStyle]}>
+                         {/* Icon */}
+                         <View style={styles.iconContainer}>
                               {currentIndex === 0 ? (
-                                   <ThemedText type="loginTitle" style={styles.logoText}>
-                                        at
-                                   </ThemedText>
+                                   <View style={styles.logoContainer}>
+                                        <ThemedText type="loginTitle" style={styles.logoText}>
+                                             at
+                                        </ThemedText>
+                                   </View>
                               ) : (
-                                   <Ionicons
-                                        name={currentPage.icon as any}
-                                        size={120}
-                                        color={currentPage.color}
-                                   />
+                                   <View
+                                        style={[
+                                             styles.iconCircle,
+                                             { backgroundColor: `${currentPage.color}15` },
+                                        ]}
+                                   >
+                                        <Ionicons
+                                             name={currentPage.icon as any}
+                                             size={80}
+                                             color={currentPage.color}
+                                        />
+                                   </View>
                               )}
                          </View>
+
                          <ThemedText type="loginTitle" style={styles.title}>
                               {currentPage.title}
                          </ThemedText>
 
-                         {/* DESCRIPTION */}
-                         {currentIndex === 1 ? (
-                              <View style={styles.bulletContainer}>
-                                   {(currentPage.description as string[]).map((item, index) => (
-                                        <View key={index} style={styles.bulletRow}>
-                                             <ThemedText style={styles.bulletDot}>•</ThemedText>
-                                             <ThemedText type="default" style={styles.bulletText}>
-                                                  {item}
-                                             </ThemedText>
-                                        </View>
-                                   ))}
-                              </View>
-                         ) : (
-                              <ThemedText type="default" style={[styles.text, styles.centerText]}>
-                                   {currentPage.description as string}
-                              </ThemedText>
-                         )}
+                         <View style={styles.descriptionContainer}>
+                              {currentIndex === 1 ? (
+                                   <View style={styles.bulletContainer}>
+                                        {(currentPage.description as string[]).map(
+                                             (item, index) => (
+                                                  <View key={index} style={styles.bulletRow}>
+                                                       <View style={styles.bulletDotContainer}>
+                                                            <View style={styles.bulletDot} />
+                                                       </View>
+                                                       <ThemedText
+                                                            type="default"
+                                                            style={styles.bulletText}
+                                                       >
+                                                            {item}
+                                                       </ThemedText>
+                                                  </View>
+                                             )
+                                        )}
+                                   </View>
+                              ) : (
+                                   <ThemedText type="default" style={styles.description}>
+                                        {currentPage.description as string}
+                                   </ThemedText>
+                              )}
+                         </View>
 
-                         {/* CONSENT */}
                          {currentIndex === 1 && (
                               <View style={styles.checkboxWrapper}>
-                                   <Checkbox
-                                        isChecked={termsAccepted}
-                                        onChange={setTermsAccepted}
-                                        value="sm"
-                                   >
-                                        <CheckboxIndicator>
-                                             <CheckboxIcon as={CheckIcon} />
-                                        </CheckboxIndicator>
-                                        <CheckboxLabel>
-                                             <ThemedText type="default">
-                                                  I have read and agree to the Terms & Privacy
-                                                  Policy, and I consent to the collection of my
-                                                  facial biometrics for verification purposes.
-                                             </ThemedText>
-                                        </CheckboxLabel>
-                                   </Checkbox>
+                                   <View style={styles.checkboxContainer}>
+                                        <Checkbox
+                                             isChecked={termsAccepted}
+                                             onChange={setTermsAccepted}
+                                             value="sm"
+                                        >
+                                             <CheckboxIndicator>
+                                                  <CheckboxIcon as={CheckIcon} />
+                                             </CheckboxIndicator>
+                                             <CheckboxLabel>
+                                                  <ThemedText
+                                                       type="default"
+                                                       style={styles.checkboxText}
+                                                  >
+                                                       I have read and agree to the Terms & Privacy
+                                                       Policy, and I consent to the collection of my
+                                                       facial biometrics for verification purposes.
+                                                  </ThemedText>
+                                             </CheckboxLabel>
+                                        </Checkbox>
+                                   </View>
                               </View>
                          )}
-                    </View>
+                    </Animated.View>
                </View>
                <View style={styles.footer}>
                     <View style={styles.buttonRow}>
@@ -152,7 +220,6 @@ export default function OnboardingScreen() {
                               disabled={currentIndex === 1 && !termsAccepted}
                               style={[
                                    currentIndex === 0 ? styles.fullWidthButton : styles.nextButton,
-                                   currentIndex === 1 && !termsAccepted && styles.disabledButton,
                               ]}
                          >
                               <ButtonText>
@@ -168,52 +235,133 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
      container: {
           flex: 1,
-          backgroundColor: "#faf9f5",
+          backgroundColor: "#ffffff",
      },
      header: {
           paddingTop: 60,
-          alignItems: "center",
+          paddingHorizontal: 24,
+          paddingBottom: 20,
      },
-     center: {
+     progressContainer: {
+          gap: 12,
+     },
+     stepText: {
+          fontSize: 14,
+          opacity: 0.6,
+          textAlign: "center",
+     },
+     progressBarBackground: {
+          height: 4,
+          backgroundColor: "#E5E7EB",
+          borderRadius: 2,
+          overflow: "hidden",
+     },
+     progressBarFill: {
+          height: "100%",
+          backgroundColor: "#4F46E5",
+          borderRadius: 2,
+     },
+     contentContainer: {
           flex: 1,
           justifyContent: "center",
-     },
-     page: {
           paddingHorizontal: 24,
+     },
+     pageWrapper: {
           alignItems: "center",
      },
-     iconWrapper: { marginBottom: 12 },
+     iconContainer: {
+          marginBottom: 32,
+     },
+     logoContainer: {
+          width: 140,
+          height: 140,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: "#F3F4F6",
+          borderRadius: 70,
+     },
      logoText: {
-          fontSize: 150,
-          textAlign: "center",
+          fontSize: 80,
+     },
+     iconCircle: {
+          width: 160,
+          height: 160,
+          borderRadius: 80,
+          justifyContent: "center",
+          alignItems: "center",
      },
      title: {
+          fontSize: 28,
           textAlign: "center",
-          marginVertical: 16,
+          marginBottom: 16,
+          paddingHorizontal: 20,
      },
-     text: {
-          opacity: 0.85,
-          lineHeight: 22,
+     descriptionContainer: {
+          width: "100%",
+          marginTop: 8,
      },
-     centerText: { textAlign: "center" },
-
-     bulletContainer: { width: "100%", marginTop: 8 },
-     bulletRow: { flexDirection: "row", marginBottom: 10 },
-     bulletDot: { marginRight: 8, lineHeight: 22 },
+     description: {
+          fontSize: 16,
+          lineHeight: 24,
+          textAlign: "center",
+          opacity: 0.7,
+          paddingHorizontal: 12,
+     },
+     bulletContainer: {
+          width: "100%",
+          gap: 16,
+          paddingHorizontal: 4,
+     },
+     bulletRow: {
+          flexDirection: "row",
+          alignItems: "flex-start",
+     },
+     bulletDotContainer: {
+          paddingTop: 6,
+          marginRight: 12,
+     },
+     bulletDot: {
+          width: 6,
+          height: 6,
+          borderRadius: 3,
+          backgroundColor: "#4F46E5",
+     },
      bulletText: {
           flex: 1,
+          fontSize: 15,
           lineHeight: 22,
-          opacity: 0.85,
+          opacity: 0.8,
      },
-     checkboxWrapper: { marginTop: 24 },
-     footer: { paddingHorizontal: 20, paddingBottom: 30 },
-     buttonRow: { flexDirection: "row", gap: 12 },
-     backButton: { flex: 1 },
-     nextButton: { flex: 2 },
-     fullWidthButton: {
+     checkboxWrapper: {
+          width: "100%",
+          marginTop: 32,
+     },
+     checkboxContainer: {
+          backgroundColor: "#F9FAFB",
+          padding: 16,
+          borderRadius: 12,
+          borderWidth: 1,
+          borderColor: "#E5E7EB",
+     },
+     checkboxText: {
+          fontSize: 14,
+          lineHeight: 20,
+     },
+     footer: {
+          paddingHorizontal: 24,
+          paddingBottom: 40,
+     },
+     buttonRow: {
+          flexDirection: "row",
+          gap: 12,
+     },
+     backButton: {
           flex: 1,
      },
-     disabledButton: {
-          opacity: 0.3,
+     nextButton: {
+          flex: 2,
+     },
+     fullWidthButton: {
+          flex: 1,
      },
 })

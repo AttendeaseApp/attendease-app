@@ -4,7 +4,10 @@ import { StyleSheet, ActivityIndicator, FlatList, View, RefreshControl } from "r
 import { EventSessionCard } from "../cards/event.session.card"
 import { ThemedText } from "../ui/text/themed.text"
 import { Event } from "@/domain/interface/event/session/event.session"
-import { subscribeToEvents } from "@/server/service/api/homepage/subscribe-events"
+import {
+     subscribeToEvents,
+     fetchInitialEvents,
+} from "@/server/service/api/homepage/subscribe-events"
 import { Ionicons } from "@expo/vector-icons"
 import { EventStatus } from "@/domain/enums/event/status/event.status.enum"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
@@ -17,7 +20,14 @@ export default function EventSessionsFeed() {
 
      const onRefresh = useCallback(async () => {
           setRefreshing(true)
-          setTimeout(() => setRefreshing(false), 1000)
+          try {
+               const freshEvents = await fetchInitialEvents()
+               setEvents(freshEvents)
+          } catch (err) {
+               console.error("Failed to refresh events:", err)
+          } finally {
+               setRefreshing(false)
+          }
      }, [])
 
      useFocusEffect(
