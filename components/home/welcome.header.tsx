@@ -19,14 +19,6 @@ export default function WelcomeHeader() {
           }, [])
      )
 
-     if (loading) {
-          return (
-               <View>
-                    <ActivityIndicator size="small" color="#27548A" />
-               </View>
-          )
-     }
-
      return (
           <View
                style={{

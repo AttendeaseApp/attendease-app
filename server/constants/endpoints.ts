@@ -1,10 +1,10 @@
 /**
  * Main entry point for the ATTENDEASE BACKEND SERVICE
  */
- export const API_BASE_URL = process.env.SERVER_PUBLIC_API_BASE as string;
+ export const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE as string;
 
  if (!API_BASE_URL) {
-   throw new Error("SERVER_PUBLIC_API_BASE is not defined");
+   throw new Error("EXPO_PUBLIC_API_BASE is not defined");
  }
 
 /**
