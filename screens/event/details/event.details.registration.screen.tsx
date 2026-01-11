@@ -186,7 +186,7 @@ export default function EventDetailsRegistrationScreen() {
                          startAutoUpgradePolling()
                     }
                     if (
-                         status.isRegistered &&
+                         status.registered &&
                          [
                               AttendanceStatusEnum.REGISTERED,
                               AttendanceStatusEnum.LATE,
@@ -268,7 +268,7 @@ export default function EventDetailsRegistrationScreen() {
                               strictLocationValidation
                          ) {
                               startAutoUpgradePolling()
-                         } else if (shouldStartTracking && updatedStatus.isRegistered)
+                         } else if (shouldStartTracking && updatedStatus.registered)
                               Alert.alert("Success", updatedStatus.message)
                     } catch (error) {
                          console.error("Failed to refresh status after registration:", error)
@@ -358,7 +358,7 @@ export default function EventDetailsRegistrationScreen() {
                          </View>
 
                          {/* Registration Status Badge */}
-                         {registrationStatus?.isRegistered && (
+                         {registrationStatus?.registered && (
                               <View
                                    style={[
                                         styles.statusBadge,
