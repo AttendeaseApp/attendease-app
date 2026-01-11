@@ -1,30 +1,32 @@
 import { ThemedText } from "@/components/ui/text/themed.text"
+import { BiometricsManagementService } from "@/server/service/api/biometrics/management/biometrics-management-service"
 import {
      getAutoRegisterSetting,
      saveAutoRegisterSetting,
 } from "@/utils/settings/auto-registration.settings"
-import { BiometricsManagementService } from "@/server/service/api/biometrics/management/biometrics-management-service"
 import { Ionicons } from "@expo/vector-icons"
+import AsyncStorage from "@react-native-async-storage/async-storage"
+import * as Application from "expo-application"
 import { useRouter } from "expo-router"
 import React, { useEffect, useState } from "react"
 import {
+     ActivityIndicator,
+     Alert,
      ScrollView,
      StatusBar,
      StyleSheet,
      Switch,
      TouchableOpacity,
      View,
-     Alert,
-     ActivityIndicator,
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
-import * as Application from "expo-application"
 
 export default function AccountSettingsScreen() {
      const router = useRouter()
-     const [notificationsEnabled, setNotificationsEnabled] = useState(true)
      const [autoRegisterEnabled, setAutoRegisterEnabled] = useState(false)
      const [isDeleting, setIsDeleting] = useState(false)
+     const [hasBiometrics, setHasBiometrics] = useState(true)
+     const [isLoadingBiometrics, setIsLoadingBiometrics] = useState(true)
      const appVersion = Application.nativeApplicationVersion
      const buildNumber = Application.nativeBuildVersion
 
@@ -32,6 +34,9 @@ export default function AccountSettingsScreen() {
           const loadSettings = async () => {
                const enabled = await getAutoRegisterSetting()
                setAutoRegisterEnabled(enabled)
+               const registrationComplete = await AsyncStorage.getItem("facialRegistrationComplete")
+               setHasBiometrics(registrationComplete === "true")
+               setIsLoadingBiometrics(false)
           }
           loadSettings()
      }, [])
@@ -45,6 +50,8 @@ export default function AccountSettingsScreen() {
           setIsDeleting(true)
           try {
                const message = await BiometricsManagementService.deleteFacialData()
+               await AsyncStorage.removeItem("facialRegistrationComplete")
+               setHasBiometrics(false)
                Alert.alert("Success", message, [{ text: "Ok" }])
           } catch (error: any) {
                Alert.alert(
@@ -76,22 +83,20 @@ export default function AccountSettingsScreen() {
           )
      }
 
+     const handleRegisterBiometrics = async () => {
+          const studentNumber = await AsyncStorage.getItem("studentNumber")
+          router.push({
+               pathname: "/(routes)/(biometrics)/onboarding",
+               params: { studentNumber: studentNumber || "" },
+          })
+     }
+
      const securitySettings = [
           {
                title: "Change Password",
                description: "Update your account password",
                onPress: () => router.push("/(routes)/(account)/password"),
                type: "navigation" as const,
-          },
-     ]
-
-     const notificationSettings = [
-          {
-               title: "Push Notifications",
-               description: "Receive notifications on this device",
-               type: "toggle" as const,
-               value: notificationsEnabled,
-               onToggle: setNotificationsEnabled,
           },
      ]
 
@@ -181,7 +186,6 @@ export default function AccountSettingsScreen() {
                               </View>
                          </View>
 
-                         {/*event registration*/}
                          <View style={styles.section}>
                               <ThemedText type="subtitle" style={styles.sectionTitle}>
                                    Event Registration
@@ -193,17 +197,45 @@ export default function AccountSettingsScreen() {
                               </View>
                          </View>
 
-                         {/*notifications*/}
-                         <View style={styles.section}>
-                              <ThemedText type="subtitle" style={styles.sectionTitle}>
-                                   Notifications
-                              </ThemedText>
-                              <View style={styles.settingsGroup}>
-                                   {notificationSettings.map((setting, index) =>
-                                        renderSettingItem(setting, index, notificationSettings)
-                                   )}
+                         {/*biometrics registration - show only if not registered*/}
+                         {!isLoadingBiometrics && !hasBiometrics && (
+                              <View style={styles.section}>
+                                   <ThemedText type="subtitle" style={styles.sectionTitle}>
+                                        Biometric Authentication
+                                   </ThemedText>
+                                   <View style={styles.settingsGroup}>
+                                        <TouchableOpacity
+                                             style={styles.settingItem}
+                                             onPress={handleRegisterBiometrics}
+                                             activeOpacity={0.7}
+                                        >
+                                             <View style={styles.iconContainer}>
+                                                  <Ionicons name="scan" size={24} color="#4F46E5" />
+                                             </View>
+                                             <View style={styles.settingTextContainer}>
+                                                  <ThemedText
+                                                       type="default"
+                                                       style={styles.settingTitle}
+                                                  >
+                                                       Register Facial Biometrics
+                                                  </ThemedText>
+                                                  <ThemedText
+                                                       type="default"
+                                                       style={styles.settingDescription}
+                                                  >
+                                                       Set up facial recognition for faster event
+                                                       check-ins
+                                                  </ThemedText>
+                                             </View>
+                                             <Ionicons
+                                                  name="chevron-forward"
+                                                  size={20}
+                                                  color="#9CA3AF"
+                                             />
+                                        </TouchableOpacity>
+                                   </View>
                               </View>
-                         </View>
+                         )}
 
                          {/*data privacy*/}
                          <View style={styles.section}>
@@ -232,54 +264,55 @@ export default function AccountSettingsScreen() {
                                              color="#9CA3AF"
                                         />
                                    </TouchableOpacity>
-                                   <View style={styles.settingItemBorder} />
                               </View>
                          </View>
 
-                         {/*danger zone*/}
-                         <View style={styles.section}>
-                              <ThemedText
-                                   type="subtitle"
-                                   style={[styles.sectionTitle, { color: "#EF4444" }]}
-                              >
-                                   Danger Zone
-                              </ThemedText>
-                              <View style={styles.settingsGroup}>
-                                   <TouchableOpacity
-                                        style={styles.settingItem}
-                                        onPress={confirmDeleteBiometrics}
-                                        disabled={isDeleting}
-                                        activeOpacity={0.7}
+                         {/*danger zone - show only if biometrics registered*/}
+                         {!isLoadingBiometrics && hasBiometrics && (
+                              <View style={styles.section}>
+                                   <ThemedText
+                                        type="subtitle"
+                                        style={[styles.sectionTitle, { color: "#EF4444" }]}
                                    >
-                                        <View style={styles.settingTextContainer}>
-                                             <ThemedText
-                                                  type="default"
-                                                  style={[
-                                                       styles.settingTitle,
-                                                       { color: "#EF4444" },
-                                                  ]}
-                                             >
-                                                  Delete My Biometrics
-                                             </ThemedText>
-                                             <ThemedText
-                                                  type="default"
-                                                  style={styles.settingDescription}
-                                             >
-                                                  Permanently delete your facial data
-                                             </ThemedText>
-                                        </View>
-                                        {isDeleting ? (
-                                             <ActivityIndicator size="small" color="#EF4444" />
-                                        ) : (
-                                             <Ionicons
-                                                  name="chevron-forward"
-                                                  size={20}
-                                                  color="#EF4444"
-                                             />
-                                        )}
-                                   </TouchableOpacity>
+                                        Danger Zone
+                                   </ThemedText>
+                                   <View style={styles.settingsGroup}>
+                                        <TouchableOpacity
+                                             style={styles.settingItem}
+                                             onPress={confirmDeleteBiometrics}
+                                             disabled={isDeleting}
+                                             activeOpacity={0.7}
+                                        >
+                                             <View style={styles.settingTextContainer}>
+                                                  <ThemedText
+                                                       type="default"
+                                                       style={[
+                                                            styles.settingTitle,
+                                                            { color: "#EF4444" },
+                                                       ]}
+                                                  >
+                                                       Delete My Biometrics
+                                                  </ThemedText>
+                                                  <ThemedText
+                                                       type="default"
+                                                       style={styles.settingDescription}
+                                                  >
+                                                       Permanently delete your facial data
+                                                  </ThemedText>
+                                             </View>
+                                             {isDeleting ? (
+                                                  <ActivityIndicator size="small" color="#EF4444" />
+                                             ) : (
+                                                  <Ionicons
+                                                       name="chevron-forward"
+                                                       size={20}
+                                                       color="#EF4444"
+                                                  />
+                                             )}
+                                        </TouchableOpacity>
+                                   </View>
                               </View>
-                         </View>
+                         )}
 
                          {/*about*/}
                          <View style={styles.section}>
@@ -368,9 +401,10 @@ const styles = StyleSheet.create({
           borderBottomColor: "#F3F4F6",
      },
      iconContainer: {
-          width: 48,
-          height: 48,
-          borderRadius: 24,
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          backgroundColor: "#EEF2FF",
           justifyContent: "center",
           alignItems: "center",
      },
