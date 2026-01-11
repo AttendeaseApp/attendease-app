@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react"
 import { SplashScreen, Stack, useRouter, useSegments } from "expo-router"
 import { ThemeProvider } from "@/context/theme.context"
-// import { AttendanceTrackingProvider } from "@/store/attendance/tracking/attendance.tracking.context";
+import { AttendanceTrackingProvider } from "@/store/attendance/tracking/attendance.tracking.context"
 import { LogBox, Alert } from "react-native"
 import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider"
 import AsyncStorage from "@react-native-async-storage/async-storage"
@@ -178,7 +178,9 @@ export default function RootLayout() {
      return (
           <GluestackUIProvider mode="light">
                <ThemeProvider>
-                    <RootLayoutNav />
+                    <AttendanceTrackingProvider>
+                         <RootLayoutNav />
+                    </AttendanceTrackingProvider>
                </ThemeProvider>
           </GluestackUIProvider>
      )

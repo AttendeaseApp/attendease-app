@@ -216,21 +216,13 @@ export const EventSessionCard: React.FC<EventCardProps> = ({
                     </View>
 
                     {loadingStatus && (
-                         <View style={styles.registrationStatusBadge}>
+                         <View>
                               <ActivityIndicator size="small" color="#6B7280" />
                          </View>
                     )}
 
                     {!loadingStatus && registrationStatusStyle && (
-                         <View
-                              style={[
-                                   styles.registrationStatusBadge,
-                                   {
-                                        backgroundColor: registrationStatusStyle.backgroundColor,
-                                        borderColor: registrationStatusStyle.borderColor,
-                                   },
-                              ]}
-                         >
+                         <View>
                               <ThemedText
                                    type="default"
                                    style={[
@@ -411,15 +403,6 @@ const styles = StyleSheet.create({
           fontSize: 12,
           color: "#1E40AF",
           flex: 1,
-     },
-     registrationStatusBadge: {
-          paddingHorizontal: 8,
-          paddingVertical: 4,
-          borderRadius: 4,
-          borderWidth: 1,
-          flexDirection: "row",
-          alignItems: "center",
-          gap: 4,
      },
      registrationStatusText: {
           fontSize: 11,

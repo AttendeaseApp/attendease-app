@@ -1,12 +1,9 @@
-// Option 1: Change the hook to match the component (RECOMMENDED)
-// hooks/events/status/useEventStatus.ts
-
 import { useEffect, useState, useRef } from "react"
 import { subscribeEventStatusCheck } from "@/server/service/api/event/status/subscribe-event-status-check"
 import { EventStatusCheckResponse } from "@/domain/interface/event/status/event.status.check.response"
 
 interface UseEventStatusMonitoringReturn {
-     eventState: EventStatusCheckResponse | null // Changed from eventStatus
+     eventState: EventStatusCheckResponse | null
      isConnected: boolean
      error: string | null
      lastUpdate: Date | null
@@ -21,7 +18,7 @@ export function useEventStatusMonitoring(
      eventId: string | null,
      enabled: boolean = true
 ): UseEventStatusMonitoringReturn {
-     const [eventState, setEventState] = useState<EventStatusCheckResponse | null>(null) // Changed from eventStatus
+     const [eventState, setEventState] = useState<EventStatusCheckResponse | null>(null)
      const [isConnected, setIsConnected] = useState(false)
      const [error, setError] = useState<string | null>(null)
      const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
@@ -89,7 +86,7 @@ export function useEventStatusMonitoring(
      }, [eventId, enabled])
 
      return {
-          eventState, // Changed from eventStatus
+          eventState,
           isConnected,
           error,
           lastUpdate,
