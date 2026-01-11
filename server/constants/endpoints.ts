@@ -1,7 +1,11 @@
 /**
  * Main entry point for the ATTENDEASE BACKEND SERVICE
  */
-export const API_BASE_URL = "http://192.168.1.7:8082";
+ export const API_BASE_URL = process.env.SERVER_PUBLIC_API_BASE as string;
+
+ if (!API_BASE_URL) {
+   throw new Error("SERVER_PUBLIC_API_BASE is not defined");
+ }
 
 /**
  * WebSocket Base URL
