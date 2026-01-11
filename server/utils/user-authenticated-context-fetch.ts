@@ -1,4 +1,4 @@
-import AsyncStorage from "@react-native-async-storage/async-storage"
+import { getAuthToken } from "./token-cache"
 
 /**
  * A wrapper around fetch that includes the auth token from AsyncStorage
@@ -10,7 +10,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage"
  */
 export async function userAuthenticatedContextFetch(url: string, options: any = {}) {
      try {
-          const token = await AsyncStorage.getItem("authToken")
+          const token = await getAuthToken()
 
           const headers: any = {
                ...(options.headers || {}),
