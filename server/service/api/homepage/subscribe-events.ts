@@ -7,7 +7,7 @@ import { GET_HOMEPAGE_EVENTS } from "@/server/constants/endpoints"
 /**
  * Fetch initial events via HTTP
  */
-async function fetchInitialEvents(): Promise<Event[]> {
+export async function fetchInitialEvents(): Promise<Event[]> {
      try {
           const response = await userAuthenticatedContextFetch(GET_HOMEPAGE_EVENTS)
           if (!response.ok) {
