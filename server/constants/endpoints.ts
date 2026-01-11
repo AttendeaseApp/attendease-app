@@ -29,11 +29,11 @@ export const REGISTER_FACE = `${API_BASE_URL}/api/auth/biometrics/register-face-
  * - GET_EVENT_STATE_STATUS - Retrieves the current state of an event.
  */
 export const RETRIEVE_ONGOING_REGISTRATION_AND_ACTIVE_EVENTS = `${API_BASE_URL}/api/registration/events`;
-export const GET_EVENT_BY_ID = (id: string) =>
-    `${API_BASE_URL}/api/registration/events/${id}`;
+export const GET_EVENT_BY_ID = (eventId: string) =>
+    `${API_BASE_URL}/api/student/event/registration/${eventId}`;
 export const GET_EVENT_STATE_STATUS = (id: string) =>
     `${API_BASE_URL}/api/registration/${id}/start-status`;
-export const REST_EVENT_RETRIEVAL = `${API_BASE_URL}/api/student/event/homepage`;
+export const GET_HOMEPAGE_EVENTS = `${API_BASE_URL}/api/student/event/registration/homepage`;
 
 /**
  * EVENT REGISTRATION

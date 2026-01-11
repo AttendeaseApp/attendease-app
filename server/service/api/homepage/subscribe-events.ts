@@ -2,14 +2,14 @@ import { IMessage } from "@stomp/stompjs"
 import { stompConnect } from "@/server/utils/user-authenticated-context-ws"
 import { Event } from "@/domain/interface/event/session/event.session"
 import { userAuthenticatedContextFetch } from "@/server/utils/user-authenticated-context-fetch"
-import { REST_EVENT_RETRIEVAL } from "@/server/constants/endpoints"
+import { GET_HOMEPAGE_EVENTS } from "@/server/constants/endpoints"
 
 /**
  * Fetch initial events via HTTP
  */
 async function fetchInitialEvents(): Promise<Event[]> {
      try {
-          const response = await userAuthenticatedContextFetch(REST_EVENT_RETRIEVAL)
+          const response = await userAuthenticatedContextFetch(GET_HOMEPAGE_EVENTS)
           if (!response.ok) {
                console.error("Failed to fetch events:", response.status)
                return []

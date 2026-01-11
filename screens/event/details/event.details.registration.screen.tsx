@@ -13,7 +13,7 @@ import { Button, ButtonText } from "@/components/ui/button"
 import { ThemedText } from "@/components/ui/text/themed.text"
 import { Event } from "@/domain/interface/event/session/event.session"
 import { useEventRegistration } from "@/hooks/events/registration/useEventRegistration"
-import { subscribeToEventById } from "@/server/service/api/event/subscribe-to-event-by-id"
+import { getEventById } from "@/server/service/api/event/get-event-by-id"
 import { formatDateTime } from "@/utils/date-time-formatter-util"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { verifyRegistrationLocation } from "@/server/service/api/geolocation/verify-registration-location"
@@ -70,21 +70,24 @@ export default function EventDetailsRegistrationScreen() {
      const requireFace = facialEnabled && !attendanceMonitoringEnabled
      const shouldStartTracking = attendanceMonitoringEnabled && eventData?.venueLocationId
 
-     const eventFetchingSubscription = useCallback(async () => {
-          setLoadingEvent(true)
-          const subscription = await subscribeToEventById(eventId, (data) => {
-               console.log("[WS] Event received:", data)
-               setEventData(data)
+     const fetchEventData = useCallback(async () => {
+          if (!eventId) return
+
+          try {
+               setLoadingEvent(true)
+               const event = await getEventById(eventId)
+               setEventData(event)
+          } catch (error) {
+               console.error("Failed to fetch event:", error)
+               Alert.alert("Error", "Failed to load event details")
+          } finally {
                setLoadingEvent(false)
-          })
-          return () => subscription.unsubscribe?.()
+          }
      }, [eventId])
 
      useEffect(() => {
-          let cleanup: (() => void) | undefined
-          eventFetchingSubscription().then((unsub) => (cleanup = unsub))
-          return () => cleanup?.()
-     }, [eventFetchingSubscription])
+          fetchEventData()
+     }, [fetchEventData])
 
      useEffect(() => {
           let unsubscribe: any
@@ -218,33 +221,16 @@ export default function EventDetailsRegistrationScreen() {
      const onRefresh = useCallback(async () => {
           setRefreshing(true)
           try {
-               const status = await checkEventRegistrationStatus(eventId)
-               setRegistrationStatus(status)
-
-               if (
-                    status.attendanceStatus === AttendanceStatusEnum.PARTIALLY_REGISTERED &&
-                    strictLocationValidation &&
-                    !isPollingForUpgrade
-               ) {
-                    startAutoUpgradePolling()
-               } else if (
-                    status.attendanceStatus !== AttendanceStatusEnum.PARTIALLY_REGISTERED &&
-                    isPollingForUpgrade
-               ) {
-                    stopAutoUpgradePolling()
-               }
+               await Promise.all([
+                    fetchEventData(),
+                    checkEventRegistrationStatus(eventId).then(setRegistrationStatus),
+               ])
           } catch (error) {
-               console.error("Failed to refresh registration status:", error)
+               console.error("Failed to refresh:", error)
+          } finally {
+               setRefreshing(false)
           }
-
-          setTimeout(() => setRefreshing(false), 500)
-     }, [
-          eventId,
-          strictLocationValidation,
-          isPollingForUpgrade,
-          startAutoUpgradePolling,
-          stopAutoUpgradePolling,
-     ])
+     }, [eventId, fetchEventData])
 
      const handleRegister = useCallback(
           async (faceData?: string) => {
