@@ -2,7 +2,7 @@
 
 ## Overview
 
-RCIANS ATTENDEASE is a comprehensive mobile for efficient 
+RCIANS ATTENDEASE is a comprehensive mobile for efficient
 event tracking and student attendance verification.
 
 ## System Requirements
@@ -11,7 +11,7 @@ event tracking and student attendance verification.
 
 The application requires the following device permissions to function properly:
 
-- **Camera Access** - For facial registration and verification 
+- **Camera Access** - For facial registration and verification
 - **Location Services** - For attendance location monitoring and verification
 - **Internet Connection** - For real-time event updates and data synchronization
 
@@ -35,15 +35,18 @@ The application requires the following device permissions to function properly:
 ### Common Issues
 
 **WebSocket Connection Fails**
+
 - Verify backend server is running
 - Check URLs in environment variables
 - Ensure network connectivity
 
 **Camera Permission Denied**
+
 - Grant camera permissions in device settings
 - Restart the application after granting permissions
 
 **Location Services Unavailable**
+
 - Enable location services in device settings
 - Ensure GPS is turned on for outdoor events
 
@@ -57,6 +60,7 @@ The application requires the following device permissions to function properly:
 ## Support
 
 For issues, please contact:
+
 - Email: attendease051@gmail.com
 - Or, submit issue on this repository
 
