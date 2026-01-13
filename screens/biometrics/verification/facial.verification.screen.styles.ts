@@ -1,6 +1,6 @@
 import { StyleSheet } from "react-native"
 
-const registrationScreenStyles = StyleSheet.create({
+const facialVerificationScreenStyles = StyleSheet.create({
      container: {
           flex: 1,
           backgroundColor: "#000",
@@ -26,44 +26,23 @@ const registrationScreenStyles = StyleSheet.create({
           shadowRadius: 8,
           elevation: 5,
      },
+     faceFrameContainer: {
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+     },
      faceFrame: {
-          position: "absolute",
-          top: "50%",
-          left: "50%",
           width: 250,
           height: 300,
-          marginLeft: -125,
-          marginTop: -150,
           borderWidth: 3,
-          borderColor: "#4ade80",
+          borderColor: "#0D9488",
           borderRadius: 150,
           backgroundColor: "transparent",
-          shadowColor: "#4ade80",
+          shadowColor: "#0D9488",
           shadowOffset: { width: 0, height: 0 },
           shadowOpacity: 0.6,
           shadowRadius: 15,
           elevation: 10,
-     },
-     progressIndicators: {
-          flexDirection: "row",
-          justifyContent: "center",
-          alignItems: "center",
-          gap: 8,
-          paddingVertical: 12,
-     },
-     progressDot: {
-          height: 12,
-          borderRadius: 6,
-          justifyContent: "center",
-          alignItems: "center",
-     },
-     progressDotActive: {
-          backgroundColor: "#4ade80",
-          shadowColor: "#4ade80",
-          shadowOffset: { width: 0, height: 0 },
-          shadowOpacity: 0.6,
-          shadowRadius: 8,
-          elevation: 5,
      },
      controls: {
           backgroundColor: "#fff",
@@ -76,19 +55,6 @@ const registrationScreenStyles = StyleSheet.create({
           shadowOpacity: 0.1,
           shadowRadius: 12,
           elevation: 10,
-     },
-     buttonGroup: {
-          flexDirection: "row",
-          gap: 12,
-     },
-     helpText: {
-          textAlign: "left",
-          opacity: 0.7,
-     },
-     progressCounter: {
-          marginTop: 8,
-          fontSize: 12,
-          opacity: 0.8,
      },
      center: {
           flex: 1,
@@ -103,4 +69,4 @@ const registrationScreenStyles = StyleSheet.create({
      },
 })
 
-export default registrationScreenStyles
+export default facialVerificationScreenStyles

@@ -27,6 +27,7 @@ import { AttendanceStatusEnum } from "@/domain/enums/attendance/status/attendanc
 import { useAttendanceTracking } from "@/store/attendance/tracking/attendance.tracking.context"
 import { useEventStatusMonitoring } from "@/hooks/events/status/useEventStatus"
 import { EventStatus } from "@/domain/enums/event/status/event.status.enum"
+import AsyncStorage from "@react-native-async-storage/async-storage"
 
 interface LocationStatus {
      isInside: boolean
@@ -284,6 +285,11 @@ export default function EventDetailsRegistrationScreen() {
           }
      }, [eventId, fetchEventData])
 
+     const checkBiometricsRegistration = async (): Promise<boolean> => {
+          const registrationComplete = await AsyncStorage.getItem("facialRegistrationComplete")
+          return registrationComplete === "true"
+     }
+
      const handleRegister = useCallback(
           async (faceData?: string) => {
                if (registrationInProgressRef.current) {
@@ -300,6 +306,37 @@ export default function EventDetailsRegistrationScreen() {
                }
 
                if (requireFace && !faceData) {
+                    const hasBiometrics = await checkBiometricsRegistration()
+
+                    if (!hasBiometrics) {
+                         Alert.alert(
+                              "Biometric Registration Required",
+                              "This event requires facial verification, but you haven't registered your biometric data yet. Would you like to register now?",
+                              [
+                                   {
+                                        text: "Cancel",
+                                        style: "cancel",
+                                   },
+                                   {
+                                        text: "Register Biometrics",
+                                        onPress: async () => {
+                                             const studentNumber =
+                                                  await AsyncStorage.getItem("studentNumber")
+                                             router.push({
+                                                  pathname: "/(routes)/(biometrics)/onboarding",
+                                                  params: {
+                                                       studentNumber: studentNumber || "",
+                                                       returnTo: "event",
+                                                       eventId: eventId,
+                                                  },
+                                             })
+                                        },
+                                   },
+                              ],
+                              { cancelable: true }
+                         )
+                         return
+                    }
                     router.push({
                          pathname: "/(routes)/(biometrics)/verification",
                          params: { eventId },
@@ -367,16 +404,25 @@ export default function EventDetailsRegistrationScreen() {
      }, [eventId])
 
      const renderRegistrationButton = () => {
-          const buttonText =
-               loading || registrationInProgressRef.current
-                    ? "REGISTERING..."
-                    : requireFace
-                      ? "VERIFY & REGISTER"
-                      : "REGISTER"
+          const getButtonText = () => {
+               if (loading || registrationInProgressRef.current) {
+                    return "REGISTERING..."
+               }
+               if (requireFace) {
+                    return "VERIFY FACE & REGISTER"
+               }
+               return "REGISTER"
+          }
+
+          const isDisabled =
+               loading ||
+               registrationInProgressRef.current ||
+               registrationStatus?.registered ||
+               eventData?.eventStatus === EventStatus.CONCLUDED
 
           return (
-               <Button variant="solid" action="secondary" onPress={() => handleRegister()}>
-                    <ButtonText>{buttonText}</ButtonText>
+               <Button variant="solid" onPress={() => handleRegister()} disabled={isDisabled}>
+                    <ButtonText>{getButtonText()}</ButtonText>
                </Button>
           )
      }
