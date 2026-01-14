@@ -24,7 +24,7 @@ export const useLogin = () => {
 
      const handleLogin = async () => {
           if (!studentNumber || !password) {
-               showAlert("MISSING INFORMATION", "Please enter your credentials.")
+               showAlert("Missing Credentials", "Please enter your complete credentials.")
                return
           }
 
@@ -38,7 +38,7 @@ export const useLogin = () => {
 
                     if (!token) {
                          showAlert(
-                              "LOGIN ERROR",
+                              "Login Error",
                               "Authentication token not found. Please try again."
                          )
                          setLoading(false)
@@ -49,7 +49,7 @@ export const useLogin = () => {
                     const currentTime = Date.now() / 1000
 
                     if (decoded.exp < currentTime) {
-                         showAlert("LOGIN EXPIRED", "Session expired. Please log in again.")
+                         showAlert("Login Expired", "Session expired. Please log in again.")
                          await AsyncStorage.removeItem("authToken")
                          setLoading(false)
                          return
@@ -57,24 +57,29 @@ export const useLogin = () => {
 
                     const { studentNumber: tokenStudentNumber, requiresFacialRegistration } =
                          decoded
+                    await AsyncStorage.setItem("studentNumber", tokenStudentNumber)
+                    console.log("Student number stored:", tokenStudentNumber)
 
                     if (requiresFacialRegistration) {
+                         console.log("Facial registration required, navigating to onboarding...")
                          router.replace({
                               pathname: "/(routes)/(biometrics)/onboarding",
                               params: { studentNumber: tokenStudentNumber },
                          })
                     } else {
+                         console.log("Login complete, navigating to tabs...")
+                         await AsyncStorage.setItem("facialRegistrationComplete", "true")
                          router.replace("/(tabs)")
                     }
                } else {
-                    showAlert("LOGIN FAILED", result.message)
+                    showAlert("Login Failed", result.message)
                }
           } catch (error: any) {
                showAlert(
-                    "ERROR",
+                    "Error",
                     "Something went wrong. Please try again.\n" + (error?.message ?? "")
                )
-               console.error("LOGIN ERROR:", error)
+               console.error("Login Error:", error)
           } finally {
                setLoading(false)
           }

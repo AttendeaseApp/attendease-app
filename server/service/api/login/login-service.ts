@@ -1,6 +1,6 @@
 import { LOGIN_ENDPOINT } from "@/server/constants/endpoints"
 import { LoginRequest } from "@/domain/interface/login/login.request"
-import AsyncStorage from "@react-native-async-storage/async-storage"
+import { setAuthToken } from "@/server/utils/token-cache"
 import { LoginResult } from "@/domain/interface/login/login.result"
 
 const JWT_TOKEN_HEADER = "Jwt-Token"
@@ -27,7 +27,7 @@ export async function loginService(request: LoginRequest): Promise<LoginResult> 
           if (response.ok) {
                const token = response.headers.get(JWT_TOKEN_HEADER)
                if (token) {
-                    await AsyncStorage.setItem("authToken", token)
+                    setAuthToken(token)
                     console.log("Token stored successfully from headers")
                } else {
                     console.warn("Login successful but no token found in headers")
