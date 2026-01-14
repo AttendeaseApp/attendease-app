@@ -140,6 +140,10 @@ export const EventSessionCard: React.FC<EventCardProps> = ({
      const { eventState } = useEventStatusMonitoring(eventId, shouldMonitor)
 
      useEffect(() => {
+          setCurrentEventStatus(eventStatus)
+     }, [eventStatus])
+
+     useEffect(() => {
           async function fetchRegistrationStatus() {
                if (
                     ![

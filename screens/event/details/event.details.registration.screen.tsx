@@ -18,7 +18,6 @@ import { formatDateTime } from "@/utils/date-time-formatter-util"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { verifyRegistrationLocation } from "@/server/service/api/geolocation/verify-registration-location"
 import { verifyVenueLocationWithAutoUpgrade } from "@/server/service/api/geolocation/verify-venue-location-with-auto-upgrade"
-import { LocationTrackingResponse } from "@/domain/interface/location/location-tracking-response"
 import {
      checkEventRegistrationStatus,
      RegistrationStatusResponse,
@@ -53,6 +52,7 @@ export default function EventDetailsRegistrationScreen() {
           useState<RegistrationStatusResponse | null>(null)
      const [checkingStatus, setCheckingStatus] = useState(true)
      const [locationStatus, setLocationStatus] = useState<LocationStatus | null>(null)
+     const [verifyingLocation, setVerifyingLocation] = useState(false)
      const [refreshing, setRefreshing] = useState(false)
      const [isPollingForUpgrade, setIsPollingForUpgrade] = useState(false)
      const [autoUpgradeMessage, setAutoUpgradeMessage] = useState<string | null>(null)
@@ -104,24 +104,28 @@ export default function EventDetailsRegistrationScreen() {
      }, [fetchEventData])
 
      useEffect(() => {
-          let unsubscribe: any
-          async function setup() {
+          async function verifyLocation() {
                if (latitude === null || longitude === null || !eventId) return
-               unsubscribe = await verifyRegistrationLocation(
-                    eventId,
-                    latitude,
-                    longitude,
-                    (response: LocationTrackingResponse) => {
-                         setLocationStatus({
-                              isInside: response.inside,
-                              message: response.message,
-                         })
-                    }
-               )
+
+               try {
+                    setVerifyingLocation(true)
+                    const response = await verifyRegistrationLocation(eventId, latitude, longitude)
+                    setLocationStatus({
+                         isInside: response.inside,
+                         message: response.message,
+                    })
+               } catch (error) {
+                    console.error("Failed to verify registration location:", error)
+                    setLocationStatus({
+                         isInside: false,
+                         message: "Unable to verify location. Please try again.",
+                    })
+               } finally {
+                    setVerifyingLocation(false)
+               }
           }
 
-          setup()
-          return () => unsubscribe?.unsubscribe?.()
+          verifyLocation()
      }, [eventId, latitude, longitude])
 
      useEffect(() => {
@@ -168,36 +172,30 @@ export default function EventDetailsRegistrationScreen() {
                if (latitude === null || longitude === null) return
 
                try {
-                    const unsubscribe = await verifyVenueLocationWithAutoUpgrade(
+                    const response = await verifyVenueLocationWithAutoUpgrade(
                          eventId,
                          latitude,
-                         longitude,
-                         async (response: LocationTrackingResponse) => {
-                              if (response.autoUpgraded) {
-                                   stopAutoUpgradePolling()
-                                   Alert.alert("Registration Completed!", response.message, [
-                                        {
-                                             text: "Ok",
-                                             onPress: async () => {
-                                                  const updatedStatus =
-                                                       await checkEventRegistrationStatus(eventId)
-                                                  setRegistrationStatus(updatedStatus)
-                                                  if (shouldStartTracking) {
-                                                       startTracking(
-                                                            eventId,
-                                                            eventData!.venueLocationId!
-                                                       )
-                                                  }
-                                             },
-                                        },
-                                   ])
-                              } else if (response.inside) {
-                                   stopAutoUpgradePolling()
-                              }
-
-                              unsubscribe?.unsubscribe?.()
-                         }
+                         longitude
                     )
+
+                    if (response.autoUpgraded) {
+                         stopAutoUpgradePolling()
+                         Alert.alert("Registration Completed!", response.message, [
+                              {
+                                   text: "Ok",
+                                   onPress: async () => {
+                                        const updatedStatus =
+                                             await checkEventRegistrationStatus(eventId)
+                                        setRegistrationStatus(updatedStatus)
+                                        if (shouldStartTracking) {
+                                             startTracking(eventId, eventData!.venueLocationId!)
+                                        }
+                                   },
+                              },
+                         ])
+                    } else if (response.inside) {
+                         stopAutoUpgradePolling()
+                    }
                } catch (error) {
                     console.error("Auto-upgrade check failed:", error)
                }
@@ -278,12 +276,19 @@ export default function EventDetailsRegistrationScreen() {
                     fetchEventData(),
                     checkEventRegistrationStatus(eventId).then(setRegistrationStatus),
                ])
+               if (latitude !== null && longitude !== null) {
+                    const response = await verifyRegistrationLocation(eventId, latitude, longitude)
+                    setLocationStatus({
+                         isInside: response.inside,
+                         message: response.message,
+                    })
+               }
           } catch (error) {
                console.error("Failed to refresh:", error)
           } finally {
                setRefreshing(false)
           }
-     }, [eventId, fetchEventData])
+     }, [eventId, fetchEventData, latitude, longitude])
 
      const checkBiometricsRegistration = async (): Promise<boolean> => {
           const registrationComplete = await AsyncStorage.getItem("facialRegistrationComplete")
@@ -409,16 +414,13 @@ export default function EventDetailsRegistrationScreen() {
                     return "REGISTERING..."
                }
                if (requireFace) {
-                    return "VERIFY FACE & REGISTER"
+                    return "VERIFY"
                }
                return "REGISTER"
           }
 
           const isDisabled =
-               loading ||
-               registrationInProgressRef.current ||
-               registrationStatus?.registered ||
-               eventData?.eventStatus === EventStatus.CONCLUDED
+               registrationStatus?.registered || eventData?.eventStatus === EventStatus.CONCLUDED
 
           return (
                <Button variant="solid" onPress={() => handleRegister()} disabled={isDisabled}>
@@ -446,12 +448,6 @@ export default function EventDetailsRegistrationScreen() {
                >
                     <View style={styles.contentWrapper}>
                          {/* Event Status */}
-                         {/*<View style={styles.infoSection}>
-                              <ThemedText type="defaultSemiBold">
-                                   {eventData?.eventStatus || "N/A"}
-                              </ThemedText>
-                         </View>*/}
-
                          <View style={styles.infoSection}>
                               <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                                    <ThemedText type="defaultSemiBold">
@@ -725,10 +721,22 @@ export default function EventDetailsRegistrationScreen() {
                                    </View>
                               )}
 
-                              {/* Location verification status */}
+                              {/* Location verification status with loading indicator */}
                               {locationStatus && (
-                                   <View style={styles.infoSection}>
-                                        <ThemedText type="default">
+                                   <View style={styles.locationStatusContainer}>
+                                        {verifyingLocation && (
+                                             <ActivityIndicator size="small" color="#6B7280" />
+                                        )}
+                                        <ThemedText
+                                             type="default"
+                                             style={[
+                                                  styles.locationStatusText,
+                                                  locationStatus.isInside &&
+                                                       styles.locationInsideText,
+                                                  !locationStatus.isInside &&
+                                                       styles.locationOutsideText,
+                                             ]}
+                                        >
                                              {locationStatus.message}
                                         </ThemedText>
                                    </View>
@@ -850,5 +858,21 @@ const styles = StyleSheet.create({
      liveStatusText: {
           color: "#991B1B",
           fontSize: 13,
+     },
+     locationStatusContainer: {
+          flexDirection: "row",
+          alignItems: "center",
+          padding: 12,
+          gap: 8,
+     },
+     locationStatusText: {
+          flex: 1,
+          fontSize: 14,
+     },
+     locationInsideText: {
+          color: "#059669",
+     },
+     locationOutsideText: {
+          color: "#DC2626",
      },
 })
