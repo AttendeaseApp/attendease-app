@@ -134,19 +134,28 @@ export default function OneTimeFacialRegistrationScreen() {
                showAlert("AUTHENTICATION REQUIRED", "Please login to register your face.")
                return
           }
+
           setIsProcessing(true)
 
           try {
                const photo = await cameraRef.current.takePictureAsync({
-                    quality: 0.8,
-                    skipProcessing: true,
+                    quality: 1.0,
+                    skipProcessing: false,
                     shutterSound: false,
+                    imageType: "jpg",
                })
+
                if (!photo) {
-                    showAlert("ERROR", "Failed to capture image")
+                    showAlert("Error", "Failed to capture image")
                     setIsProcessing(false)
                     return
                }
+
+               console.log(`Captured image ${capturedImages.length + 1}:`, {
+                    uri: photo.uri.substring(0, 50),
+                    width: photo.width,
+                    height: photo.height,
+               })
 
                const newImages = [...capturedImages, photo.uri]
                setCapturedImages(newImages)
@@ -161,7 +170,7 @@ export default function OneTimeFacialRegistrationScreen() {
                }, 600)
           } catch (error: any) {
                console.error("Face capture error:", error)
-               showAlert("ERROR", error.message || "Failed to capture image")
+               showAlert("Error", error.message || "Failed to capture image")
                setIsProcessing(false)
           }
      }
@@ -174,9 +183,9 @@ export default function OneTimeFacialRegistrationScreen() {
                if (result.success) {
                     await AsyncStorage.setItem("facialRegistrationComplete", "true")
 
-                    showAlert("SUCCESS", result.message ?? "Face registered successfully!", [
+                    showAlert("Success", result.message ?? "Face registered successfully!", [
                          {
-                              label: "OK",
+                              label: "Okay",
                               action: () => {
                                    router.replace("/(tabs)")
                                    resetCapture()
@@ -185,7 +194,7 @@ export default function OneTimeFacialRegistrationScreen() {
                     ])
                } else {
                     showAlert(
-                         "REGISTRATION FAILED",
+                         "Registration Failed",
                          result.message ?? "Face registration failed. Please try again.",
                          [
                               {
@@ -200,7 +209,7 @@ export default function OneTimeFacialRegistrationScreen() {
           } catch (error: any) {
                console.error("Face registration error:", error)
                showAlert(
-                    "ERROR",
+                    "Error",
                     error.message ||
                          "Something went wrong during face registration. Please check your network connection.",
                     [
