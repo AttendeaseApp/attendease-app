@@ -298,7 +298,7 @@ export default function EventDetailsRegistrationScreen() {
      const handleRegister = useCallback(
           async (faceData?: string) => {
                if (registrationInProgressRef.current) {
-                    console.log("Registration already in progress, skipping...")
+                    console.log("[Registration] Already in progress, skipping...")
                     return
                }
 
@@ -310,7 +310,12 @@ export default function EventDetailsRegistrationScreen() {
                     return
                }
 
+               // Check if facial verification is required but no face data provided
                if (requireFace && !faceData) {
+                    console.log(
+                         "[Registration] Facial verification required, checking biometric status..."
+                    )
+
                     const hasBiometrics = await checkBiometricsRegistration()
 
                     if (!hasBiometrics) {
@@ -342,6 +347,8 @@ export default function EventDetailsRegistrationScreen() {
                          )
                          return
                     }
+
+                    console.log("[Registration] Navigating to biometric verification screen...")
                     router.push({
                          pathname: "/(routes)/(biometrics)/verification",
                          params: { eventId },
@@ -349,10 +356,16 @@ export default function EventDetailsRegistrationScreen() {
                     return
                }
 
+               console.log("[Registration] Starting registration process...")
+               console.log("[Registration] Face data provided:", !!faceData)
+
                registrationInProgressRef.current = true
 
                performRegistration(faceData || null, async () => {
                     try {
+                         console.log(
+                              "[Registration] Registration successful, fetching updated status..."
+                         )
                          const updatedStatus = await checkEventRegistrationStatus(eventId)
                          setRegistrationStatus(updatedStatus)
 
@@ -361,13 +374,19 @@ export default function EventDetailsRegistrationScreen() {
                                    AttendanceStatusEnum.PARTIALLY_REGISTERED &&
                               strictLocationValidation
                          ) {
+                              console.log(
+                                   "[Registration] Partially registered, starting auto-upgrade polling..."
+                              )
                               startAutoUpgradePolling()
                          } else if (shouldStartTracking && updatedStatus.registered) {
+                              console.log("[Registration] Starting attendance tracking...")
                               startTracking(eventId, eventData!.venueLocationId!)
                          }
-                         Alert.alert("Success", updatedStatus.message)
                     } catch (error) {
-                         console.error("Failed to refresh status after registration:", error)
+                         console.error(
+                              "[Registration] Failed to refresh status after registration:",
+                              error
+                         )
                     } finally {
                          registrationInProgressRef.current = false
                     }
@@ -397,16 +416,36 @@ export default function EventDetailsRegistrationScreen() {
                longitude !== null &&
                !loading &&
                !checkingStatus &&
-               requireFace
+               !registrationInProgressRef.current
           ) {
+               console.log("[Registration] Face parameter detected:", face)
+               console.log("[Registration] Triggering registration with face data...")
+
                faceProcessedRef.current = true
-               handleRegister(face)
+               setTimeout(() => {
+                    handleRegister(face)
+               }, 100)
           }
-     }, [face, latitude, longitude, loading, checkingStatus, requireFace, handleRegister])
+     }, [face, latitude, longitude, loading, checkingStatus, handleRegister])
 
      useEffect(() => {
+          console.log("[Registration] Event ID changed, resetting face processed flag")
           faceProcessedRef.current = false
      }, [eventId])
+
+     useEffect(() => {
+          if (face) {
+               console.log("[Registration] Face parameter updated:", face)
+               console.log("[Registration] Current state:", {
+                    faceProcessed: faceProcessedRef.current,
+                    latitude,
+                    longitude,
+                    loading,
+                    checkingStatus,
+                    registrationInProgress: registrationInProgressRef.current,
+               })
+          }
+     }, [face, latitude, longitude, loading, checkingStatus])
 
      const renderRegistrationButton = () => {
           const getButtonText = () => {

@@ -20,11 +20,6 @@ const facialVerificationScreenStyles = StyleSheet.create({
           backgroundColor: "rgba(0, 0, 0, 0.7)",
           padding: 16,
           borderRadius: 12,
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.3,
-          shadowRadius: 8,
-          elevation: 5,
      },
      faceFrameContainer: {
           flex: 1,
