@@ -37,13 +37,13 @@ export default function EventRegistrationFacialVerificationScreen() {
 
           try {
                const photo = await cameraRef.current.takePictureAsync({
-                    quality: 0.8,
-                    base64: true,
+                    quality: 1.0,
+                    base64: false,
                     shutterSound: false,
                })
 
-               if (!photo.base64) {
-                    throw new Error("Failed to capture image data.")
+               if (!photo.uri) {
+                    throw new Error("Failed to capture image.")
                }
 
                router.push({
@@ -51,7 +51,7 @@ export default function EventRegistrationFacialVerificationScreen() {
                     params: {
                          eventId,
                          locationId,
-                         face: photo.base64,
+                         faceUri: photo.uri,
                     },
                })
           } catch (error: any) {

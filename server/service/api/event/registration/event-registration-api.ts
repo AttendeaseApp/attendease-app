@@ -2,35 +2,44 @@ import { REGISTER_STUDENT_ON_EVENT_ENDPOINT } from "@/server/constants/endpoints
 import { userAuthenticatedContextFetch } from "@/server/utils/user-authenticated-context-fetch"
 
 /**
- * Registers a student for an event.
+ * Registers a student for an event using multipart form data.
  * Backend will verify location using the event's registration location.
  *
  * @param eventId - The event to register for
  * @param latitude - Current latitude
  * @param longitude - Current longitude
- * @param faceImageBase64 - Optional base64 face image for facial verification
+ * @param faceImageUri - Optional URI to the captured face image for facial verification
  * @returns Registration result with success status and message
  */
 export async function eventRegistrationAPIService(
      eventId: string,
      latitude: number,
      longitude: number,
-     faceImageBase64?: string
+     faceImageUri?: string
 ) {
      try {
-          const body: any = {
+          const formData = new FormData()
+          const registrationData = {
                eventId,
                latitude,
                longitude,
           }
+          formData.append("registrationData", JSON.stringify(registrationData))
 
-          if (faceImageBase64 && faceImageBase64.trim() !== "") {
-               body.faceImageBase64 = faceImageBase64
+          if (faceImageUri && faceImageUri.trim() !== "") {
+               const uriParts = faceImageUri.split(".")
+               const fileExtension = uriParts[uriParts.length - 1]
+               const faceImageFile = {
+                    uri: faceImageUri,
+                    type: `image/${fileExtension === "jpg" ? "jpeg" : fileExtension}`,
+                    name: `face-verification.${fileExtension}`,
+               } as any
+               formData.append("faceImage", faceImageFile)
           }
 
           const response = await userAuthenticatedContextFetch(REGISTER_STUDENT_ON_EVENT_ENDPOINT, {
                method: "POST",
-               body: JSON.stringify(body),
+               body: formData,
           })
 
           if (!response.ok) {
@@ -38,6 +47,7 @@ export async function eventRegistrationAPIService(
                return {
                     success: false,
                     message: errorData.message || "Registration failed",
+                    errorCode: errorData.errorCode,
                }
           }
 

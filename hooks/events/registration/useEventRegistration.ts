@@ -20,12 +20,12 @@ export function useEventRegistration(eventId: string) {
      }, [])
 
      const register = useCallback(
-          (faceImageBase64: string | null | undefined, onSuccess?: () => void) => {
+          (faceImageUri: string | null | undefined, onSuccess?: () => void) => {
                EventRegistrationServiceHandler({
                     eventId,
                     latitude,
                     longitude,
-                    faceImageBase64: faceImageBase64 || "",
+                    faceImageUri: faceImageUri || null,
                     setLoading,
                     onSuccess: onSuccess || (() => {}),
                })

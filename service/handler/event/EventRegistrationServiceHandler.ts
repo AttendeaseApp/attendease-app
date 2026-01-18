@@ -5,7 +5,7 @@ export interface RegistrationParams {
      eventId: string
      latitude: number | null
      longitude: number | null
-     faceImageBase64: string
+     faceImageUri: string | null | undefined
      setLoading: React.Dispatch<React.SetStateAction<boolean>>
      onSuccess?: () => void
 }
@@ -14,7 +14,7 @@ export async function EventRegistrationServiceHandler({
      eventId,
      latitude,
      longitude,
-     faceImageBase64,
+     faceImageUri,
      setLoading,
      onSuccess,
 }: RegistrationParams) {
@@ -23,7 +23,7 @@ export async function EventRegistrationServiceHandler({
           return
      }
 
-     if (faceImageBase64 === null || faceImageBase64 === undefined) {
+     if (!faceImageUri) {
           console.log("Registering without facial verification.")
      }
 
@@ -34,7 +34,7 @@ export async function EventRegistrationServiceHandler({
                eventId,
                latitude,
                longitude,
-               faceImageBase64 || ""
+               faceImageUri || undefined
           )
 
           if (result.success) {
@@ -45,11 +45,27 @@ export async function EventRegistrationServiceHandler({
                     [{ text: "OK" }]
                )
           } else {
-               Alert.alert("Registration Failed", result.message || "Please try again.")
+               const errorTitle = getErrorTitle(result.errorCode)
+               Alert.alert(errorTitle, result.message || "Please try again.")
           }
      } catch (error: any) {
           Alert.alert("Error", error.message || "Something went wrong.")
      } finally {
           setLoading(false)
+     }
+}
+
+function getErrorTitle(errorCode?: string): string {
+     switch (errorCode) {
+          case "VALIDATION_ERROR":
+               return "Verification Failed"
+          case "INVALID_FILE_TYPE":
+               return "Invalid Image"
+          case "BAD_REQUEST":
+               return "Invalid Request"
+          case "INTERNAL_ERROR":
+               return "Server Error"
+          default:
+               return "Registration Failed"
      }
 }
