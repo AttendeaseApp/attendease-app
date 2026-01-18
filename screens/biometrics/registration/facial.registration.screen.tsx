@@ -139,6 +139,8 @@ export default function OneTimeFacialRegistrationScreen() {
           try {
                const photo = await cameraRef.current.takePictureAsync({
                     quality: 0.8,
+                    skipProcessing: true,
+                    shutterSound: false,
                })
                if (!photo) {
                     showAlert("ERROR", "Failed to capture image")
@@ -302,7 +304,7 @@ export default function OneTimeFacialRegistrationScreen() {
                               <ThemedText
                                    type="default"
                                    colorVariant="white"
-                                   style={{ fontSize: 16 }}
+                                   style={{ fontSize: 16, fontWeight: "600" }}
                               >
                                    {getInstructionText()}
                               </ThemedText>
@@ -327,8 +329,9 @@ export default function OneTimeFacialRegistrationScreen() {
                               </View>
                          </View>
 
-                         {/*face frame */}
-                         <View style={registrationScreenStyles.faceFrame} />
+                         <View style={registrationScreenStyles.faceFrameContainer}>
+                              <View style={registrationScreenStyles.faceFrame} />
+                         </View>
 
                          <View style={registrationScreenStyles.progressIndicators}>
                               {[...Array(REQUIRED_IMAGES)].map((_, index) => (

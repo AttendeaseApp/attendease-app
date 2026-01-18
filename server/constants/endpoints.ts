@@ -45,7 +45,9 @@ export const GET_HOMEPAGE_EVENTS = `${API_BASE_URL}/api/student/event/registrati
  */
 export const REGISTER_STUDENT_ON_EVENT_ENDPOINT = `${API_BASE_URL}/api/registration`;
 export const PING_ATTENDANCE_ENDPOINT = `${API_BASE_URL}/api/registration/ping`;
-export const CHECK_CURRENT_LOCATION = `${API_BASE_URL}/api/registration/check-location`;
+export const VERIFY_EVENT_REGISTRATION_LOCATION = `${API_BASE_URL}/api/student/location/verification/registration-location`;
+export const VERIFY_EVENT_VENUE_LOCATION = `${API_BASE_URL}/api/student/location/verification/venue-location`;
+export const VERIFY_EVENT_VENUE_WITH_LOCATION_UPGRADE = `${API_BASE_URL}/api/student/location/verification/venue-location/auto-upgrade`;
 export const CHECK_ATTENDANCE_STATUS = (eventId: string) =>
     `${API_BASE_URL}/api/student/event/registration/status/${eventId}`;
 

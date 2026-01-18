@@ -1,6 +1,9 @@
-import { IMessage } from "@stomp/stompjs"
-import { stompConnect } from "@/server/utils/user-authenticated-context-ws"
 import { LocationTrackingResponse } from "@/domain/interface/location/location-tracking-response"
+import { userAuthenticatedContextFetch } from "@/server/utils/user-authenticated-context-fetch"
+import {
+     VERIFY_EVENT_REGISTRATION_LOCATION,
+     VERIFY_EVENT_VENUE_LOCATION,
+} from "@/server/constants/endpoints"
 
 /**
  * Verifies if user is at the event's registration location
@@ -8,33 +11,76 @@ import { LocationTrackingResponse } from "@/domain/interface/location/location-t
 export async function verifyRegistrationLocation(
      eventId: string,
      latitude: number,
-     longitude: number,
-     callback: (data: LocationTrackingResponse) => void
-) {
+     longitude: number
+): Promise<LocationTrackingResponse> {
      if (latitude === null || longitude === null) {
           console.warn("Cannot verify location: coordinates are null")
-          return { unsubscribe: () => {} }
+          throw new Error("Invalid coordinates: latitude and longitude are required")
      }
 
-     const client = await stompConnect()
+     try {
+          console.log("Sending registration location verification request:", {
+               eventId,
+               latitude,
+               longitude,
+          })
 
-     const subscription = client.subscribe(
-          "/user/queue/registration-location-verification",
-          (message: IMessage) => {
-               try {
-                    const body = JSON.parse(message.body) as LocationTrackingResponse
-                    callback(body)
-                    console.log("Registration location verified:", body)
-               } catch (e) {
-                    console.error("Failed to parse registration location response:", e)
-               }
+          const response = await userAuthenticatedContextFetch(VERIFY_EVENT_REGISTRATION_LOCATION, {
+               method: "POST",
+               body: JSON.stringify({ eventId, latitude, longitude }),
+          })
+
+          if (!response.ok) {
+               const errorText = await response.text()
+               console.error("Registration location verification failed:", errorText)
+               throw new Error(`Registration location verification failed: ${response.status}`)
           }
-     )
 
-     client.publish({
-          destination: "/app/verify-registration-location",
-          body: JSON.stringify({ eventId, latitude, longitude }),
-     })
+          const data = (await response.json()) as LocationTrackingResponse
+          console.log("Registration location response received:", data)
+          return data
+     } catch (error) {
+          console.error("Error in verifyRegistrationLocation:", error)
+          throw error
+     }
+}
 
-     return subscription
+/**
+ * Verifies if user is at the event's venue location (for ongoing events)
+ */
+export async function verifyVenueLocation(
+     eventId: string,
+     latitude: number,
+     longitude: number
+): Promise<LocationTrackingResponse> {
+     if (latitude === null || longitude === null) {
+          console.warn("Cannot verify venue location: coordinates are null")
+          throw new Error("Invalid coordinates: latitude and longitude are required")
+     }
+
+     try {
+          console.log("Sending venue location verification request:", {
+               eventId,
+               latitude,
+               longitude,
+          })
+
+          const response = await userAuthenticatedContextFetch(VERIFY_EVENT_VENUE_LOCATION, {
+               method: "POST",
+               body: JSON.stringify({ eventId, latitude, longitude }),
+          })
+
+          if (!response.ok) {
+               const errorText = await response.text()
+               console.error("Venue location verification failed:", errorText)
+               throw new Error(`Venue location verification failed: ${response.status}`)
+          }
+
+          const data = (await response.json()) as LocationTrackingResponse
+          console.log("Venue location response received:", data)
+          return data
+     } catch (error) {
+          console.error("Error in verifyVenueLocation:", error)
+          throw error
+     }
 }
