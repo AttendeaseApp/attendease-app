@@ -60,6 +60,7 @@ export default function EventDetailsRegistrationScreen() {
      const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
      const registrationInProgressRef = useRef(false)
      const faceProcessedRef = useRef(false)
+
      const isTrackingThisEvent = trackingState.isTracking && trackingState.eventId === eventId
 
      const {
@@ -310,7 +311,6 @@ export default function EventDetailsRegistrationScreen() {
                     return
                }
 
-               // Check if facial verification is required but no face data provided
                if (requireFace && !faceData) {
                     console.log(
                          "[Registration] Facial verification required, checking biometric status..."
@@ -507,9 +507,7 @@ export default function EventDetailsRegistrationScreen() {
 
                          {/* Event Name */}
                          <View style={styles.infoSection}>
-                              <ThemedText type="loginTitle">
-                                   {eventData?.eventName || "N/A"}
-                              </ThemedText>
+                              <ThemedText type="title">{eventData?.eventName || "N/A"}</ThemedText>
                          </View>
 
                          {/* Registration Status Badge */}
@@ -707,32 +705,12 @@ export default function EventDetailsRegistrationScreen() {
                                    <>
                                         {isTrackingThisEvent ? (
                                              <View style={styles.pingStatusContainer}>
-                                                  {trackingState.eventStatus && (
-                                                       <ThemedText type="default">
-                                                            {trackingState.eventStatus}
-                                                       </ThemedText>
-                                                  )}
                                                   <ThemedText type="default">
-                                                       {trackingState.eventStatus?.includes(
-                                                            "ongoing"
-                                                       )
-                                                            ? "Pinging every 5 minutes while event is ongoing."
-                                                            : trackingState.eventStatus?.includes(
-                                                                     "not started"
-                                                                ) ||
-                                                                trackingState.eventStatus?.includes(
-                                                                     "registration"
-                                                                )
-                                                              ? "Waiting for event to start before sending pings."
-                                                              : "Monitoring event status..."}
+                                                       Attendance tracking is active for this event.
                                                   </ThemedText>
-                                                  <ThemedText
-                                                       type="default"
-                                                       style={styles.lastPingText}
-                                                  >
-                                                       Last successful ping:{" "}
-                                                       {trackingState.lastTrackingTime ||
-                                                            "waiting for first ping..."}
+                                                  <ThemedText type="default">
+                                                       Background pings are being sent while the
+                                                       event is ongoing.
                                                   </ThemedText>
                                              </View>
                                         ) : (
@@ -797,7 +775,7 @@ const styles = StyleSheet.create({
           zIndex: 13,
      },
      infoSection: {
-          marginBottom: 16,
+          marginBlock: 16,
      },
      eventRegistrationInfoSection: {
           marginTop: 100,
@@ -817,11 +795,6 @@ const styles = StyleSheet.create({
           borderRadius: 8,
           marginBottom: 16,
           backgroundColor: "#D2CCA1",
-     },
-     lastPingText: {
-          marginTop: 4,
-          fontSize: 15,
-          opacity: 0.8,
      },
      autoUpgradeContainer: {
           flexDirection: "row",
@@ -862,37 +835,9 @@ const styles = StyleSheet.create({
           opacity: 0.8,
           marginTop: 2,
      },
-     secondaryButton: {
-          backgroundColor: "#F59E0B",
-          opacity: 0.8,
-     },
-     successButton: {
-          backgroundColor: "#10B981",
-     },
-     infoButton: {
-          backgroundColor: "#6366F1",
-     },
      environmentBadge: {
           fontSize: 12,
           color: "#6B7280",
-     },
-     liveIndicator: {
-          width: 8,
-          height: 8,
-          borderRadius: 4,
-          backgroundColor: "#10B981",
-     },
-     pulseDot: {
-          width: 8,
-          height: 8,
-          borderRadius: 4,
-          backgroundColor: "#10B981",
-     },
-     liveStatusContainer: {
-          padding: 12,
-          backgroundColor: "#FEE2E2",
-          borderRadius: 8,
-          marginBottom: 16,
      },
      liveStatusText: {
           color: "#991B1B",

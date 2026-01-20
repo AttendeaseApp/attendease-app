@@ -1,5 +1,4 @@
-import { getFontSize } from "@/themes/font-sizes"
-import { TextStyle } from "react-native"
+import { getFontSize } from "./font-sizes"
 
 export type TextType =
      | "default"
@@ -14,7 +13,7 @@ export type TextType =
 type TypographyStyle = {
      fontSize: number
      lineHeight?: number
-     fontWeight: NonNullable<TextStyle["fontWeight"]>
+     fontWeight: "400" | "500" | "600"
 }
 
 export const typography: Record<TextType, TypographyStyle> = {
