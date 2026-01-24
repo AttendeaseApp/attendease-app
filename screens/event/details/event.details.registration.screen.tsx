@@ -17,21 +17,24 @@ import { getEventById } from "@/server/service/api/event/get-event-by-id"
 import { formatDateTime } from "@/utils/date-time-formatter-util"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { verifyRegistrationLocation } from "@/server/service/api/geolocation/verify-registration-location"
-import { verifyVenueLocationWithAutoUpgrade } from "@/server/service/api/geolocation/verify-venue-location-with-auto-upgrade"
-import {
-     checkEventRegistrationStatus,
-     RegistrationStatusResponse,
-} from "@/server/service/api/event/registration/check-event-registration-status"
-import { AttendanceStatusEnum } from "@/domain/enums/attendance/status/attendance.status.enum"
+import { checkEventRegistrationStatus } from "@/server/service/api/event/registration/check-event-registration-status"
 import { useAttendanceTracking } from "@/store/attendance/tracking/attendance.tracking.context"
 import { useEventStatusMonitoring } from "@/hooks/events/status/useEventStatus"
 import { EventStatus } from "@/domain/enums/event/status/event.status.enum"
 import AsyncStorage from "@react-native-async-storage/async-storage"
-
-interface LocationStatus {
-     isInside: boolean
-     message: string
-}
+import { useLocationVerification } from "./hooks/useLocationVerification"
+import { useAutoUpgradePolling } from "./hooks/useAutoUpgradePolling"
+import { useRegistrationStatus } from "./hooks/useRegistrationStatus"
+import {
+     getRegistrationConfig,
+     shouldRequireFacialVerification,
+     shouldStartAttendanceTracking,
+     checkBiometricsRegistration,
+     showBiometricRegistrationAlert,
+     getButtonText,
+     isRegistrationDisabled,
+     handlePostRegistration,
+} from "./utils/registration.utils"
 
 export default function EventDetailsRegistrationScreen() {
      const router = useRouter()
@@ -48,16 +51,8 @@ export default function EventDetailsRegistrationScreen() {
 
      const [eventData, setEventData] = useState<Event | null>(null)
      const [loadingEvent, setLoadingEvent] = useState(true)
-     const [registrationStatus, setRegistrationStatus] =
-          useState<RegistrationStatusResponse | null>(null)
-     const [checkingStatus, setCheckingStatus] = useState(true)
-     const [locationStatus, setLocationStatus] = useState<LocationStatus | null>(null)
-     const [verifyingLocation, setVerifyingLocation] = useState(false)
      const [refreshing, setRefreshing] = useState(false)
-     const [isPollingForUpgrade, setIsPollingForUpgrade] = useState(false)
-     const [autoUpgradeMessage, setAutoUpgradeMessage] = useState<string | null>(null)
 
-     const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
      const registrationInProgressRef = useRef(false)
      const faceProcessedRef = useRef(false)
 
@@ -71,14 +66,42 @@ export default function EventDetailsRegistrationScreen() {
           register: performRegistration,
      } = useEventRegistration(eventId || "")
 
-     // event configs
-     const facialEnabled = eventData?.facialVerificationEnabled ?? true
-     const attendanceMonitoringEnabled = eventData?.attendanceLocationMonitoringEnabled ?? true
-     const strictLocationValidation = eventData?.strictLocationValidation ?? false
-     const requireFace = facialEnabled && !attendanceMonitoringEnabled
-     const shouldStartTracking = attendanceMonitoringEnabled && eventData?.venueLocationId
-
+     // EVENT CONFIGS
+     const config = getRegistrationConfig(eventData)
+     const requireFace = shouldRequireFacialVerification(config)
+     const shouldStartTracking = shouldStartAttendanceTracking(config, eventData)
      const shouldMonitorEventStatus = eventData?.eventStatus === EventStatus.ONGOING
+
+     // HOOKS
+     const { locationStatus, verifyingLocation, setLocationStatus } = useLocationVerification(
+          eventId,
+          latitude,
+          longitude
+     )
+
+     const {
+          isPollingForUpgrade,
+          autoUpgradeMessage,
+          startAutoUpgradePolling,
+          stopAutoUpgradePolling,
+     } = useAutoUpgradePolling(
+          eventId,
+          latitude,
+          longitude,
+          shouldStartTracking,
+          eventData,
+          startTracking,
+          (status) => setRegistrationStatus(status)
+     )
+
+     const { registrationStatus, checkingStatus, setRegistrationStatus } = useRegistrationStatus({
+          eventId,
+          eventData,
+          isPollingForUpgrade,
+          isTrackingThisEvent,
+          startAutoUpgradePolling,
+          startTracking,
+     })
 
      const { eventState: liveEventState } = useEventStatusMonitoring(
           eventId,
@@ -104,31 +127,7 @@ export default function EventDetailsRegistrationScreen() {
           fetchEventData()
      }, [fetchEventData])
 
-     useEffect(() => {
-          async function verifyLocation() {
-               if (latitude === null || longitude === null || !eventId) return
-
-               try {
-                    setVerifyingLocation(true)
-                    const response = await verifyRegistrationLocation(eventId, latitude, longitude)
-                    setLocationStatus({
-                         isInside: response.inside,
-                         message: response.message,
-                    })
-               } catch (error) {
-                    console.error("Failed to verify registration location:", error)
-                    setLocationStatus({
-                         isInside: false,
-                         message: "Unable to verify location. Please try again.",
-                    })
-               } finally {
-                    setVerifyingLocation(false)
-               }
-          }
-
-          verifyLocation()
-     }, [eventId, latitude, longitude])
-
+     // MONITOR EVENTS STATUS
      useEffect(() => {
           if (liveEventState) {
                console.log("[EventDetails] Live event status:", liveEventState.statusMessage)
@@ -150,126 +149,13 @@ export default function EventDetailsRegistrationScreen() {
           }
      }, [liveEventState, eventData])
 
-     const stopAutoUpgradePolling = useCallback(() => {
-          if (pollingIntervalRef.current) {
-               clearInterval(pollingIntervalRef.current)
-               pollingIntervalRef.current = null
-          }
-          setIsPollingForUpgrade(false)
-          setAutoUpgradeMessage(null)
-     }, [])
-
-     const startAutoUpgradePolling = useCallback(() => {
-          if (pollingIntervalRef.current) {
-               clearInterval(pollingIntervalRef.current)
-          }
-
-          setIsPollingForUpgrade(true)
-          setAutoUpgradeMessage(
-               "Walking to venue? We'll automatically check you in when you arrive!"
-          )
-
-          pollingIntervalRef.current = setInterval(async () => {
-               if (latitude === null || longitude === null) return
-
-               try {
-                    const response = await verifyVenueLocationWithAutoUpgrade(
-                         eventId,
-                         latitude,
-                         longitude
-                    )
-
-                    if (response.autoUpgraded) {
-                         stopAutoUpgradePolling()
-                         Alert.alert("Registration Completed!", response.message, [
-                              {
-                                   text: "Ok",
-                                   onPress: async () => {
-                                        const updatedStatus =
-                                             await checkEventRegistrationStatus(eventId)
-                                        setRegistrationStatus(updatedStatus)
-                                        if (shouldStartTracking) {
-                                             startTracking(eventId, eventData!.venueLocationId!)
-                                        }
-                                   },
-                              },
-                         ])
-                    } else if (response.inside) {
-                         stopAutoUpgradePolling()
-                    }
-               } catch (error) {
-                    console.error("Auto-upgrade check failed:", error)
-               }
-          }, 10000)
-     }, [
-          eventId,
-          latitude,
-          longitude,
-          stopAutoUpgradePolling,
-          shouldStartTracking,
-          startTracking,
-          eventData,
-     ])
-
      useEffect(() => {
           return () => {
                stopAutoUpgradePolling()
           }
      }, [stopAutoUpgradePolling])
 
-     useEffect(() => {
-          async function checkStatus() {
-               if (!eventId) return
-               try {
-                    setCheckingStatus(true)
-                    const status = await checkEventRegistrationStatus(eventId)
-                    console.log("Registration status:", status)
-                    setRegistrationStatus(status)
-
-                    if (
-                         status.attendanceStatus === AttendanceStatusEnum.PARTIALLY_REGISTERED &&
-                         eventData?.strictLocationValidation &&
-                         !isPollingForUpgrade
-                    ) {
-                         startAutoUpgradePolling()
-                    }
-                    if (
-                         status.registered &&
-                         [
-                              AttendanceStatusEnum.REGISTERED,
-                              AttendanceStatusEnum.LATE,
-                              AttendanceStatusEnum.PRESENT,
-                              AttendanceStatusEnum.IDLE,
-                         ].includes(status.attendanceStatus) &&
-                         eventData?.attendanceLocationMonitoringEnabled &&
-                         eventData?.venueLocationId &&
-                         !isTrackingThisEvent
-                    ) {
-                         console.log("Resuming tracking for registered student")
-                         startTracking(eventId, eventData.venueLocationId)
-                    }
-               } catch (error) {
-                    console.error("Failed to check registration:", error)
-               } finally {
-                    setCheckingStatus(false)
-               }
-          }
-
-          if (eventData) {
-               checkStatus()
-          }
-     }, [
-          eventId,
-          eventData?.strictLocationValidation,
-          eventData?.attendanceLocationMonitoringEnabled,
-          eventData?.venueLocationId,
-          eventData,
-          isPollingForUpgrade,
-          startAutoUpgradePolling,
-          isTrackingThisEvent,
-          startTracking,
-     ])
-
+     // REFRESH
      const onRefresh = useCallback(async () => {
           setRefreshing(true)
           try {
@@ -289,13 +175,9 @@ export default function EventDetailsRegistrationScreen() {
           } finally {
                setRefreshing(false)
           }
-     }, [eventId, fetchEventData, latitude, longitude])
+     }, [eventId, fetchEventData, latitude, longitude, setLocationStatus, setRegistrationStatus])
 
-     const checkBiometricsRegistration = async (): Promise<boolean> => {
-          const registrationComplete = await AsyncStorage.getItem("facialRegistrationComplete")
-          return registrationComplete === "true"
-     }
-
+     // REGISTRATION HANDLER
      const handleRegister = useCallback(
           async (faceData?: string) => {
                if (registrationInProgressRef.current) {
@@ -319,32 +201,17 @@ export default function EventDetailsRegistrationScreen() {
                     const hasBiometrics = await checkBiometricsRegistration()
 
                     if (!hasBiometrics) {
-                         Alert.alert(
-                              "Biometric Registration Required",
-                              "This event requires facial verification, but you haven't registered your biometric data yet. Would you like to register now?",
-                              [
-                                   {
-                                        text: "Cancel",
-                                        style: "cancel",
+                         showBiometricRegistrationAlert(async () => {
+                              const studentNumber = await AsyncStorage.getItem("studentNumber")
+                              router.push({
+                                   pathname: "/(routes)/(biometrics)/onboarding",
+                                   params: {
+                                        studentNumber: studentNumber || "",
+                                        returnTo: "event",
+                                        eventId: eventId,
                                    },
-                                   {
-                                        text: "Register Biometrics",
-                                        onPress: async () => {
-                                             const studentNumber =
-                                                  await AsyncStorage.getItem("studentNumber")
-                                             router.push({
-                                                  pathname: "/(routes)/(biometrics)/onboarding",
-                                                  params: {
-                                                       studentNumber: studentNumber || "",
-                                                       returnTo: "event",
-                                                       eventId: eventId,
-                                                  },
-                                             })
-                                        },
-                                   },
-                              ],
-                              { cancelable: true }
-                         )
+                              })
+                         })
                          return
                     }
 
@@ -362,34 +229,16 @@ export default function EventDetailsRegistrationScreen() {
                registrationInProgressRef.current = true
 
                performRegistration(faceData || null, async () => {
-                    try {
-                         console.log(
-                              "[Registration] Registration successful, fetching updated status..."
-                         )
-                         const updatedStatus = await checkEventRegistrationStatus(eventId)
-                         setRegistrationStatus(updatedStatus)
-
-                         if (
-                              updatedStatus.attendanceStatus ===
-                                   AttendanceStatusEnum.PARTIALLY_REGISTERED &&
-                              strictLocationValidation
-                         ) {
-                              console.log(
-                                   "[Registration] Partially registered, starting auto-upgrade polling..."
-                              )
-                              startAutoUpgradePolling()
-                         } else if (shouldStartTracking && updatedStatus.registered) {
-                              console.log("[Registration] Starting attendance tracking...")
-                              startTracking(eventId, eventData!.venueLocationId!)
-                         }
-                    } catch (error) {
-                         console.error(
-                              "[Registration] Failed to refresh status after registration:",
-                              error
-                         )
-                    } finally {
-                         registrationInProgressRef.current = false
-                    }
+                    await handlePostRegistration(
+                         eventId,
+                         config.strictLocationValidation,
+                         shouldStartTracking,
+                         eventData,
+                         startAutoUpgradePolling,
+                         startTracking,
+                         setRegistrationStatus
+                    )
+                    registrationInProgressRef.current = false
                })
           },
           [
@@ -400,11 +249,12 @@ export default function EventDetailsRegistrationScreen() {
                router,
                eventId,
                performRegistration,
-               strictLocationValidation,
+               config.strictLocationValidation,
                shouldStartTracking,
                startAutoUpgradePolling,
                eventData,
                startTracking,
+               setRegistrationStatus,
           ]
      )
 
@@ -433,46 +283,23 @@ export default function EventDetailsRegistrationScreen() {
           faceProcessedRef.current = false
      }, [eventId])
 
-     useEffect(() => {
-          if (face) {
-               console.log("[Registration] Face parameter updated:", face)
-               console.log("[Registration] Current state:", {
-                    faceProcessed: faceProcessedRef.current,
-                    latitude,
-                    longitude,
-                    loading,
-                    checkingStatus,
-                    registrationInProgress: registrationInProgressRef.current,
-               })
-          }
-     }, [face, latitude, longitude, loading, checkingStatus])
-
+     // REGISTRATION BUTTON RENDERER
      const renderRegistrationButton = () => {
-          const getButtonText = () => {
-               if (loading || registrationInProgressRef.current) {
-                    return "REGISTERING..."
-               }
-               if (requireFace) {
-                    return "VERIFY"
-               }
-               return "REGISTER"
-          }
-
-          const isDisabled =
-               registrationStatus?.registered || eventData?.eventStatus === EventStatus.CONCLUDED
+          const buttonText = getButtonText(loading, registrationInProgressRef.current, requireFace)
+          const isDisabled = isRegistrationDisabled(
+               registrationStatus?.registered ?? false,
+               eventData?.eventStatus ?? "",
+               EventStatus
+          )
 
           return (
                <Button variant="solid" onPress={() => handleRegister()} disabled={isDisabled}>
-                    <ButtonText>{getButtonText()}</ButtonText>
+                    <ButtonText>{buttonText}</ButtonText>
                </Button>
           )
      }
 
-     if (loadingEvent) {
-          return <ActivityIndicator size="large" color="#2A2C24" />
-     }
-
-     if (!eventId) {
+     if (loadingEvent || !eventId) {
           return <ActivityIndicator size="large" color="#2A2C24" />
      }
 
@@ -629,7 +456,7 @@ export default function EventDetailsRegistrationScreen() {
                          </View>
 
                          {/* Strict Location Validation Info */}
-                         {strictLocationValidation && (
+                         {config.strictLocationValidation && (
                               <View style={styles.infoSection}>
                                    <ThemedText type="defaultSemiBold">
                                         Registration Process
@@ -646,14 +473,16 @@ export default function EventDetailsRegistrationScreen() {
                          <View style={styles.infoSection}>
                               <ThemedText type="defaultSemiBold">Facial Verification</ThemedText>
                               <ThemedText type="default">
-                                   {facialEnabled ? "Required" : "Not Required"}
+                                   {config.facialEnabled ? "Required" : "Not Required"}
                               </ThemedText>
                          </View>
 
                          <View style={styles.infoSection}>
                               <ThemedText type="defaultSemiBold">Attendance Monitoring</ThemedText>
                               <ThemedText type="default">
-                                   {attendanceMonitoringEnabled ? "Required" : "Not Required"}
+                                   {config.attendanceMonitoringEnabled
+                                        ? "Required"
+                                        : "Not Required"}
                               </ThemedText>
                          </View>
 
@@ -701,7 +530,7 @@ export default function EventDetailsRegistrationScreen() {
 
                          {/* Attendance Tracking Status */}
                          <View style={styles.eventRegistrationInfoSection}>
-                              {attendanceMonitoringEnabled ? (
+                              {config.attendanceMonitoringEnabled ? (
                                    <>
                                         {isTrackingThisEvent ? (
                                              <View style={styles.pingStatusContainer}>
