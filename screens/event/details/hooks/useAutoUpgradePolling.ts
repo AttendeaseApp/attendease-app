@@ -15,6 +15,7 @@ export function useAutoUpgradePolling(
      const [isPollingForUpgrade, setIsPollingForUpgrade] = useState(false)
      const [autoUpgradeMessage, setAutoUpgradeMessage] = useState<string | null>(null)
      const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+     const upgradeAttemptedRef = useRef(false)
 
      const stopAutoUpgradePolling = useCallback(() => {
           if (pollingIntervalRef.current) {
@@ -23,50 +24,83 @@ export function useAutoUpgradePolling(
           }
           setIsPollingForUpgrade(false)
           setAutoUpgradeMessage(null)
+          upgradeAttemptedRef.current = false
+          console.log("[AutoUpgrade] Polling stopped")
      }, [])
 
-     const startAutoUpgradePolling = useCallback(() => {
-          if (pollingIntervalRef.current) {
-               clearInterval(pollingIntervalRef.current)
+     const checkForUpgrade = useCallback(async () => {
+          if (latitude === null || longitude === null) {
+               console.log("[AutoUpgrade] No location data yet")
+               return
           }
 
-          setIsPollingForUpgrade(true)
-          setAutoUpgradeMessage(
-               "Walking to venue? We'll automatically check you in when you arrive!"
-          )
+          try {
+               console.log("[AutoUpgrade] Checking at:", { latitude, longitude })
 
-          pollingIntervalRef.current = setInterval(async () => {
-               if (latitude === null || longitude === null) return
+               const response = await verifyVenueLocationWithAutoUpgrade(
+                    eventId,
+                    latitude,
+                    longitude
+               )
 
-               try {
-                    const response = await verifyVenueLocationWithAutoUpgrade(
-                         eventId,
-                         latitude,
-                         longitude
-                    )
+               console.log("[AutoUpgrade] Response:", response)
 
-                    if (response.autoUpgraded) {
-                         stopAutoUpgradePolling()
-                         Alert.alert("Registration Completed!", response.message, [
-                              {
-                                   text: "Ok",
-                                   onPress: async () => {
-                                        const updatedStatus =
-                                             await checkEventRegistrationStatus(eventId)
-                                        setRegistrationStatus(updatedStatus)
-                                        if (shouldStartTracking) {
-                                             startTracking(eventId, eventData!.venueLocationId!)
-                                        }
-                                   },
+               if (response.autoUpgraded) {
+                    console.log("[AutoUpgrade] Successfully upgraded!")
+                    stopAutoUpgradePolling()
+
+                    Alert.alert("Registration Completed!", response.message, [
+                         {
+                              text: "Ok",
+                              onPress: async () => {
+                                   const updatedStatus = await checkEventRegistrationStatus(eventId)
+                                   setRegistrationStatus(updatedStatus)
+
+                                   if (
+                                        shouldStartTracking &&
+                                        eventData?.venueLocation?.locationId
+                                   ) {
+                                        console.log("[AutoUpgrade] Starting attendance tracking")
+                                        startTracking(eventId, eventData.venueLocation.locationId)
+                                   }
                               },
-                         ])
-                    } else if (response.inside) {
-                         stopAutoUpgradePolling()
-                    }
-               } catch (error) {
-                    console.error("Auto-upgrade check failed:", error)
+                         },
+                    ])
+                    return
                }
-          }, 10000)
+
+               if (response.inside) {
+                    if (upgradeAttemptedRef.current) {
+                         console.log("[AutoUpgrade] Inside venue but no upgrade - checking status")
+
+                         const currentStatus = await checkEventRegistrationStatus(eventId)
+
+                         if (
+                              currentStatus.registered &&
+                              currentStatus.registrationLocationName
+                                   ?.toLowerCase()
+                                   .includes("venue")
+                         ) {
+                              console.log("[AutoUpgrade] Already fully registered at venue")
+                              stopAutoUpgradePolling()
+                              return
+                         }
+                    }
+
+                    upgradeAttemptedRef.current = true
+                    setAutoUpgradeMessage(
+                         "You're at the venue. Attempting to complete registration..."
+                    )
+                    return
+               }
+
+               upgradeAttemptedRef.current = false
+               setAutoUpgradeMessage("Walking to venue? We'll check you in when you arrive!")
+               console.log("[AutoUpgrade] Outside venue - will check again in 10 seconds")
+          } catch (error) {
+               console.error("[AutoUpgrade] Check failed:", error)
+               setAutoUpgradeMessage("Checking your location...")
+          }
      }, [
           eventId,
           latitude,
@@ -77,6 +111,24 @@ export function useAutoUpgradePolling(
           eventData,
           setRegistrationStatus,
      ])
+
+     const startAutoUpgradePolling = useCallback(() => {
+          if (pollingIntervalRef.current) {
+               console.log("[AutoUpgrade] Clearing existing interval")
+               clearInterval(pollingIntervalRef.current)
+          }
+
+          console.log("[AutoUpgrade] Starting polling")
+          setIsPollingForUpgrade(true)
+          setAutoUpgradeMessage(
+               "Walking to venue? We'll automatically check you in when you arrive!"
+          )
+          upgradeAttemptedRef.current = false
+
+          checkForUpgrade()
+
+          pollingIntervalRef.current = setInterval(checkForUpgrade, 10000)
+     }, [checkForUpgrade])
 
      useEffect(() => {
           return () => {
