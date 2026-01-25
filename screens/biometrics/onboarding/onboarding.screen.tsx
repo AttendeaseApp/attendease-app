@@ -5,7 +5,8 @@ import { ThemedText } from "@/components/ui/text/themed.text"
 import { Ionicons } from "@expo/vector-icons"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import React, { useState, useEffect } from "react"
-import { StyleSheet, View } from "react-native"
+import { StyleSheet, View, ScrollView, StatusBar } from "react-native"
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import Animated, {
      useSharedValue,
      useAnimatedStyle,
@@ -13,6 +14,7 @@ import Animated, {
      withSpring,
      Easing,
 } from "react-native-reanimated"
+import { moderateScale, normalize, SCREEN } from "@/themes/responsive"
 
 const TOTAL_STEPS = 3
 
@@ -49,6 +51,7 @@ const PAGES = [
 
 export default function OnboardingScreen() {
      const router = useRouter()
+     const insets = useSafeAreaInsets()
      const { studentNumber } = useLocalSearchParams<{ studentNumber: string }>()
 
      const [currentIndex, setCurrentIndex] = useState(0)
@@ -57,6 +60,13 @@ export default function OnboardingScreen() {
      const scale = useSharedValue(1)
 
      const currentPage = PAGES[currentIndex]
+
+     const isSmallDevice = SCREEN.width < 375
+     const isMediumDevice = SCREEN.width >= 375 && SCREEN.width < 414
+
+     const iconSize = isSmallDevice ? 60 : isMediumDevice ? 70 : 80
+     const logoSize = isSmallDevice ? 100 : isMediumDevice ? 120 : 140
+     const logoFontSize = isSmallDevice ? 60 : isMediumDevice ? 70 : 80
 
      useEffect(() => {
           opacity.value = withTiming(1, { duration: 400 })
@@ -105,8 +115,12 @@ export default function OnboardingScreen() {
      }))
 
      return (
-          <View style={styles.container}>
-               <View style={styles.header}>
+          <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+               <StatusBar barStyle="dark-content" />
+
+               <View
+                    style={[styles.header, { paddingTop: Math.max(insets.top, moderateScale(20)) }]}
+               >
                     <View style={styles.progressContainer}>
                          <ThemedText type="default" style={styles.stepText}>
                               Step {currentIndex + 1} of {TOTAL_STEPS}
@@ -117,34 +131,60 @@ export default function OnboardingScreen() {
                     </View>
                </View>
 
-               {/* Content */}
-               <View style={styles.contentContainer}>
+               <ScrollView
+                    contentContainerStyle={[
+                         styles.scrollContent,
+                         isSmallDevice && styles.scrollContentSmall,
+                    ]}
+                    showsVerticalScrollIndicator={false}
+                    bounces={false}
+               >
                     <Animated.View style={[styles.pageWrapper, animatedStyle]}>
                          {/* Icon */}
                          <View style={styles.iconContainer}>
                               {currentIndex === 0 ? (
-                                   <View style={styles.logoContainer}>
-                                        <ThemedText type="loginTitle" style={styles.logoText}>
-                                             at
+                                   <View
+                                        style={[
+                                             styles.logoContainer,
+                                             {
+                                                  width: logoSize,
+                                                  height: logoSize,
+                                                  borderRadius: logoSize / 2,
+                                             },
+                                        ]}
+                                   >
+                                        <ThemedText
+                                             type="loginTitle"
+                                             style={[{ fontSize: logoFontSize }]}
+                                        >
+                                             A
                                         </ThemedText>
                                    </View>
                               ) : (
                                    <View
                                         style={[
                                              styles.iconCircle,
-                                             { backgroundColor: `${currentPage.color}15` },
+                                             {
+                                                  backgroundColor: `${currentPage.color}15`,
+                                                  width: moderateScale(160),
+                                                  height: moderateScale(160),
+                                                  borderRadius: moderateScale(80),
+                                             },
                                         ]}
                                    >
                                         <Ionicons
                                              name={currentPage.icon as any}
-                                             size={80}
+                                             size={iconSize}
                                              color={currentPage.color}
                                         />
                                    </View>
                               )}
                          </View>
 
-                         <ThemedText type="loginTitle" style={styles.title}>
+                         <ThemedText
+                              type="loginTitle"
+                              style={[styles.title, isSmallDevice && styles.titleSmall]}
+                         >
                               {currentPage.title}
                          </ThemedText>
 
@@ -200,8 +240,14 @@ export default function OnboardingScreen() {
                               </View>
                          )}
                     </Animated.View>
-               </View>
-               <View style={styles.footer}>
+               </ScrollView>
+
+               <View
+                    style={[
+                         styles.footer,
+                         { paddingBottom: Math.max(insets.bottom, moderateScale(20)) },
+                    ]}
+               >
                     <View style={styles.buttonRow}>
                          {currentIndex > 0 && (
                               <Button
@@ -228,7 +274,7 @@ export default function OnboardingScreen() {
                          </Button>
                     </View>
                </View>
-          </View>
+          </SafeAreaView>
      )
 }
 
@@ -238,122 +284,120 @@ const styles = StyleSheet.create({
           backgroundColor: "#ffffff",
      },
      header: {
-          paddingTop: 60,
-          paddingHorizontal: 24,
-          paddingBottom: 20,
+          paddingHorizontal: moderateScale(24),
+          paddingBottom: moderateScale(20),
      },
      progressContainer: {
-          gap: 12,
+          gap: moderateScale(12),
      },
      stepText: {
-          fontSize: 14,
+          fontSize: normalize(14),
           opacity: 0.6,
           textAlign: "center",
      },
      progressBarBackground: {
-          height: 4,
+          height: moderateScale(4),
           backgroundColor: "#E5E7EB",
-          borderRadius: 2,
+          borderRadius: moderateScale(2),
           overflow: "hidden",
      },
      progressBarFill: {
           height: "100%",
           backgroundColor: "#4F46E5",
-          borderRadius: 2,
+          borderRadius: moderateScale(2),
      },
-     contentContainer: {
-          flex: 1,
+     scrollContent: {
+          flexGrow: 1,
           justifyContent: "center",
-          paddingHorizontal: 24,
+          paddingHorizontal: moderateScale(24),
+          paddingVertical: moderateScale(16),
+     },
+     scrollContentSmall: {
+          paddingVertical: moderateScale(8),
      },
      pageWrapper: {
           alignItems: "center",
      },
      iconContainer: {
-          marginBottom: 32,
+          marginBottom: moderateScale(32),
      },
      logoContainer: {
-          width: 140,
-          height: 140,
           justifyContent: "center",
           alignItems: "center",
           backgroundColor: "#F3F4F6",
-          borderRadius: 70,
-     },
-     logoText: {
-          fontSize: 80,
      },
      iconCircle: {
-          width: 160,
-          height: 160,
-          borderRadius: 80,
           justifyContent: "center",
           alignItems: "center",
      },
      title: {
-          fontSize: 28,
+          fontSize: normalize(28),
           textAlign: "center",
-          marginBottom: 16,
-          paddingHorizontal: 20,
+          marginBottom: moderateScale(16),
+          paddingHorizontal: moderateScale(20),
+     },
+     titleSmall: {
+          fontSize: normalize(24),
+          paddingHorizontal: moderateScale(12),
      },
      descriptionContainer: {
           width: "100%",
-          marginTop: 8,
+          marginTop: moderateScale(8),
      },
      description: {
-          fontSize: 16,
-          lineHeight: 24,
+          fontSize: normalize(16),
+          lineHeight: normalize(24),
           textAlign: "center",
           opacity: 0.7,
-          paddingHorizontal: 12,
+          paddingHorizontal: moderateScale(12),
      },
      bulletContainer: {
           width: "100%",
-          gap: 16,
-          paddingHorizontal: 4,
+          gap: moderateScale(16),
+          paddingHorizontal: moderateScale(4),
      },
      bulletRow: {
           flexDirection: "row",
           alignItems: "flex-start",
      },
      bulletDotContainer: {
-          paddingTop: 6,
-          marginRight: 12,
+          paddingTop: moderateScale(6),
+          marginRight: moderateScale(12),
      },
      bulletDot: {
-          width: 6,
-          height: 6,
-          borderRadius: 3,
+          width: moderateScale(6),
+          height: moderateScale(6),
+          borderRadius: moderateScale(3),
           backgroundColor: "#4F46E5",
      },
      bulletText: {
           flex: 1,
-          fontSize: 15,
-          lineHeight: 22,
+          fontSize: normalize(15),
+          lineHeight: normalize(22),
           opacity: 0.8,
      },
      checkboxWrapper: {
           width: "100%",
-          marginTop: 32,
+          marginTop: moderateScale(32),
      },
      checkboxContainer: {
           backgroundColor: "#F9FAFB",
-          padding: 16,
-          borderRadius: 12,
+          padding: moderateScale(16),
+          borderRadius: moderateScale(12),
           borderWidth: 1,
           borderColor: "#E5E7EB",
      },
      checkboxText: {
-          fontSize: 14,
-          lineHeight: 20,
+          fontSize: normalize(14),
+          lineHeight: normalize(20),
      },
      footer: {
-          paddingHorizontal: 24,
-          paddingBottom: 40,
+          paddingHorizontal: moderateScale(24),
+          paddingTop: moderateScale(16),
      },
      buttonRow: {
           flexDirection: "row",
-          gap: 12,
+          gap: moderateScale(12),
      },
      backButton: {
           flex: 1,
