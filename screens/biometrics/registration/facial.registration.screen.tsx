@@ -11,7 +11,6 @@ import React, { useEffect, useRef, useCallback } from "react"
 import { View, Alert, AlertButton, BackHandler } from "react-native"
 import { BiometricsResult } from "@/domain/interface/biometrics/registration/biometrics.registration.result.response"
 import registrationScreenStyles from "./registration.screen.styles"
-import { SafeAreaView } from "react-native-safe-area-context"
 
 export default function OneTimeFacialRegistrationScreen() {
      const router = useRouter()
@@ -229,59 +228,55 @@ export default function OneTimeFacialRegistrationScreen() {
 
      if (!permission) {
           return (
-               <SafeAreaView edges={["top", "bottom"]}>
-                    <View style={registrationScreenStyles.center}>
-                         <Ionicons
-                              name="camera-outline"
-                              size={64}
-                              color="#666"
-                              style={{ marginBottom: 16 }}
-                         />
-                         <ThemedText type="default" style={registrationScreenStyles.permissionText}>
-                              Requesting camera permission...
-                         </ThemedText>
-                    </View>
-               </SafeAreaView>
+               <View style={registrationScreenStyles.center}>
+                    <Ionicons
+                         name="camera-outline"
+                         size={64}
+                         color="#666"
+                         style={{ marginBottom: 16 }}
+                    />
+                    <ThemedText type="default" style={registrationScreenStyles.permissionText}>
+                         Requesting camera permission...
+                    </ThemedText>
+               </View>
           )
      }
 
      if (!permission.granted) {
           return (
-               <SafeAreaView edges={["top", "bottom"]}>
-                    <View style={registrationScreenStyles.center}>
-                         <Ionicons
-                              name="camera-outline"
-                              size={64}
-                              color="#666"
-                              style={{ marginBottom: 16 }}
-                         />
-                         <ThemedText
-                              type="title"
-                              style={[registrationScreenStyles.permissionText, { marginBottom: 8 }]}
-                         >
-                              Camera Access is Required
-                         </ThemedText>
-                         <ThemedText
-                              type="default"
-                              style={[
-                                   registrationScreenStyles.permissionText,
-                                   { fontSize: 14, opacity: 0.7 },
-                              ]}
-                         >
-                              We need camera access to register your face for secure authentication.
-                              This is a one-time setup required for all users.
-                         </ThemedText>
+               <View style={registrationScreenStyles.center}>
+                    <Ionicons
+                         name="camera-outline"
+                         size={64}
+                         color="#666"
+                         style={{ marginBottom: 16 }}
+                    />
+                    <ThemedText
+                         type="title"
+                         style={[registrationScreenStyles.permissionText, { marginBottom: 8 }]}
+                    >
+                         Camera Access is Required
+                    </ThemedText>
+                    <ThemedText
+                         type="default"
+                         style={[
+                              registrationScreenStyles.permissionText,
+                              { fontSize: 14, opacity: 0.7 },
+                         ]}
+                    >
+                         We need camera access to register your face for secure authentication. This
+                         is a one-time setup required for all users.
+                    </ThemedText>
 
-                         <Button
-                              action="primary"
-                              variant="outline"
-                              onPress={requestPermission}
-                              style={{ marginTop: 20 }}
-                         >
-                              <ButtonText>Grant Camera Permission</ButtonText>
-                         </Button>
-                    </View>
-               </SafeAreaView>
+                    <Button
+                         action="primary"
+                         variant="outline"
+                         onPress={requestPermission}
+                         style={{ marginTop: 20 }}
+                    >
+                         <ButtonText>Grant Camera Permission</ButtonText>
+                    </Button>
+               </View>
           )
      }
 
@@ -289,178 +284,166 @@ export default function OneTimeFacialRegistrationScreen() {
      const progressPercentage = (capturedImages.length / REQUIRED_IMAGES) * 100
 
      return (
-          <SafeAreaView edges={["top", "bottom"]}>
-               <View style={registrationScreenStyles.container}>
-                    <CameraView
-                         style={registrationScreenStyles.camera}
-                         facing="front"
-                         ref={cameraRef}
-                    >
-                         <View style={registrationScreenStyles.overlay}>
-                              {/*instruction card*/}
-                              <View style={registrationScreenStyles.instructionBox}>
-                                   <View
-                                        style={{
-                                             flexDirection: "row",
-                                             alignItems: "center",
-                                             marginBottom: 8,
-                                        }}
-                                   >
-                                        <Ionicons
-                                             name="information-circle"
-                                             size={20}
-                                             color="#fff"
-                                             style={{ marginRight: 8 }}
-                                        />
-                                        <ThemedText
-                                             type="default"
-                                             colorVariant="white"
-                                             style={{ fontSize: 12, opacity: 0.9 }}
-                                        >
-                                             Step {currentStep + 1} of {REQUIRED_IMAGES}
-                                        </ThemedText>
-                                   </View>
+          <View style={registrationScreenStyles.container}>
+               <CameraView style={registrationScreenStyles.camera} facing="front" ref={cameraRef}>
+                    <View style={registrationScreenStyles.overlay}>
+                         {/*instruction card*/}
+                         <View style={registrationScreenStyles.instructionBox}>
+                              <View
+                                   style={{
+                                        flexDirection: "row",
+                                        alignItems: "center",
+                                        marginBottom: 8,
+                                   }}
+                              >
+                                   <Ionicons
+                                        name="information-circle"
+                                        size={20}
+                                        color="#fff"
+                                        style={{ marginRight: 8 }}
+                                   />
                                    <ThemedText
                                         type="default"
                                         colorVariant="white"
-                                        style={{ fontSize: 16, fontWeight: "600" }}
+                                        style={{ fontSize: 12, opacity: 0.9 }}
                                    >
-                                        {getInstructionText()}
+                                        Step {currentStep + 1} of {REQUIRED_IMAGES}
                                    </ThemedText>
-
-                                   {/*progress bar*/}
-                                   <View
-                                        style={{
-                                             marginTop: 12,
-                                             height: 4,
-                                             backgroundColor: "rgba(255,255,255,0.3)",
-                                             borderRadius: 2,
-                                             overflow: "hidden",
-                                        }}
-                                   >
-                                        <View
-                                             style={{
-                                                  height: "100%",
-                                                  backgroundColor: "#4ade80",
-                                                  width: `${progressPercentage}%`,
-                                             }}
-                                        />
-                                   </View>
                               </View>
+                              <ThemedText
+                                   type="default"
+                                   colorVariant="white"
+                                   style={{ fontSize: 16, fontWeight: "600" }}
+                              >
+                                   {getInstructionText()}
+                              </ThemedText>
 
-                              <View style={registrationScreenStyles.faceFrameContainer}>
-                                   <View style={registrationScreenStyles.faceFrame} />
-                              </View>
-
-                              <View style={registrationScreenStyles.progressIndicators}>
-                                   {[...Array(REQUIRED_IMAGES)].map((_, index) => (
-                                        <View
-                                             key={index}
-                                             style={[
-                                                  registrationScreenStyles.progressDot,
-                                                  index < capturedImages.length &&
-                                                       registrationScreenStyles.progressDotActive,
-                                                  {
-                                                       width:
-                                                            index < capturedImages.length ? 32 : 12,
-                                                       backgroundColor:
-                                                            index < capturedImages.length
-                                                                 ? "#4ade80"
-                                                                 : "rgba(255,255,255,0.3)",
-                                                  },
-                                             ]}
-                                        >
-                                             {index < capturedImages.length && (
-                                                  <Ionicons
-                                                       name="checkmark"
-                                                       size={14}
-                                                       color="#fff"
-                                                  />
-                                             )}
-                                        </View>
-                                   ))}
-                              </View>
-                         </View>
-                    </CameraView>
-
-                    {/*bottom controls*/}
-                    <View style={registrationScreenStyles.controls}>
-                         <View style={registrationScreenStyles.buttonGroup}>
-                              {capturedImages.length > 0 &&
-                                   capturedImages.length < REQUIRED_IMAGES && (
-                                        <Button
-                                             action="secondary"
-                                             onPress={resetCapture}
-                                             disabled={isProcessing}
-                                             style={{ flex: 1 }}
-                                        >
-                                             <ButtonText>Reset</ButtonText>
-                                        </Button>
-                                   )}
-
-                              <Button
-                                   action="primary"
-                                   variant="solid"
-                                   size="lg"
-                                   onPress={captureImage}
-                                   disabled={isProcessing || isCaptureComplete}
+                              {/*progress bar*/}
+                              <View
                                    style={{
-                                        flex:
-                                             capturedImages.length > 0 &&
-                                             capturedImages.length < REQUIRED_IMAGES
-                                                  ? 2
-                                                  : 1,
+                                        marginTop: 12,
+                                        height: 4,
+                                        backgroundColor: "rgba(255,255,255,0.3)",
+                                        borderRadius: 2,
+                                        overflow: "hidden",
                                    }}
                               >
-                                   <ButtonText>
-                                        {isCaptureComplete
-                                             ? "Processing..."
-                                             : `Capture (${capturedImages.length}/${REQUIRED_IMAGES})`}
-                                   </ButtonText>
-                              </Button>
+                                   <View
+                                        style={{
+                                             height: "100%",
+                                             backgroundColor: "#d97757",
+                                             width: `${progressPercentage}%`,
+                                        }}
+                                   />
+                              </View>
                          </View>
 
-                         <View style={{ marginTop: 12, alignItems: "center" }}>
-                              <Button
-                                   action="primary"
-                                   variant="outline"
-                                   onPress={skipFacialRegistration}
-                                   size="lg"
-                              >
-                                   <ButtonText>Skip Facial Registration</ButtonText>
-                              </Button>
+                         <View style={registrationScreenStyles.faceFrameContainer}>
+                              <View style={registrationScreenStyles.faceFrame} />
                          </View>
 
-                         {/*help text*/}
-                         <View
-                              style={{
-                                   flexDirection: "row",
-                                   alignItems: "flex-start",
-                                   marginTop: 12,
-                              }}
-                         >
-                              <Ionicons
-                                   name="bulb-outline"
-                                   size={16}
-                                   color="#666"
-                                   style={{ marginRight: 8, marginTop: 2 }}
-                              />
-                              <ThemedText
-                                   style={[
-                                        registrationScreenStyles.helpText,
-                                        { flex: 1, fontSize: 13, lineHeight: 18 },
-                                   ]}
-                                   type="default"
-                              >
-                                   {isCaptureComplete
-                                        ? "All images captured! Processing your biometric profile..."
-                                        : capturedImages.length === 0
-                                          ? "Position your face within the frame and tap Capture to begin."
-                                          : "Follow the instruction above and capture the next image."}
-                              </ThemedText>
+                         <View style={registrationScreenStyles.progressIndicators}>
+                              {[...Array(REQUIRED_IMAGES)].map((_, index) => (
+                                   <View
+                                        key={index}
+                                        style={[
+                                             registrationScreenStyles.progressDot,
+                                             index < capturedImages.length &&
+                                                  registrationScreenStyles.progressDotActive,
+                                             {
+                                                  width: index < capturedImages.length ? 12 : 12,
+                                                  backgroundColor:
+                                                       index < capturedImages.length
+                                                            ? "#d97757"
+                                                            : "rgba(255,255,255,0.3)",
+                                             },
+                                        ]}
+                                   >
+                                        {/*{index < capturedImages.length && (
+                                             <Ionicons name="checkmark" size={14} color="#fff" />
+                                        )}*/}
+                                   </View>
+                              ))}
                          </View>
                     </View>
+               </CameraView>
+
+               {/*bottom controls*/}
+               <View style={registrationScreenStyles.controls}>
+                    <View style={registrationScreenStyles.buttonGroup}>
+                         {capturedImages.length > 0 && capturedImages.length < REQUIRED_IMAGES && (
+                              <Button
+                                   action="secondary"
+                                   onPress={resetCapture}
+                                   disabled={isProcessing}
+                                   style={{ flex: 1 }}
+                              >
+                                   <ButtonText>Reset</ButtonText>
+                              </Button>
+                         )}
+
+                         <Button
+                              action="primary"
+                              variant="solid"
+                              size="lg"
+                              onPress={captureImage}
+                              disabled={isProcessing || isCaptureComplete}
+                              style={{
+                                   flex:
+                                        capturedImages.length > 0 &&
+                                        capturedImages.length < REQUIRED_IMAGES
+                                             ? 2
+                                             : 1,
+                              }}
+                         >
+                              <ButtonText>
+                                   {isCaptureComplete
+                                        ? "Processing..."
+                                        : `Capture (${capturedImages.length}/${REQUIRED_IMAGES})`}
+                              </ButtonText>
+                         </Button>
+                    </View>
+
+                    <View style={{ marginTop: 12 }}>
+                         <Button
+                              action="primary"
+                              variant="outline"
+                              onPress={skipFacialRegistration}
+                              size="lg"
+                         >
+                              <ButtonText>Skip Facial Registration</ButtonText>
+                         </Button>
+                    </View>
+
+                    {/*help text*/}
+                    <View
+                         style={{
+                              flexDirection: "row",
+                              alignItems: "flex-start",
+                              marginTop: 12,
+                         }}
+                    >
+                         <Ionicons
+                              name="bulb-outline"
+                              size={16}
+                              color="#666"
+                              style={{ marginRight: 8, marginTop: 2 }}
+                         />
+                         <ThemedText
+                              style={[
+                                   registrationScreenStyles.helpText,
+                                   { flex: 1, fontSize: 13, lineHeight: 18 },
+                              ]}
+                              type="default"
+                         >
+                              {isCaptureComplete
+                                   ? "All images captured! Processing your biometric profile..."
+                                   : capturedImages.length === 0
+                                     ? "Position your face within the frame and tap Capture to begin."
+                                     : "Follow the instruction above and capture the next image."}
+                         </ThemedText>
+                    </View>
                </View>
-          </SafeAreaView>
+          </View>
      )
 }

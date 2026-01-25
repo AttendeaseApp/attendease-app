@@ -32,7 +32,7 @@ export default function LoginScreen() {
      }, [alertOpen, alertMessage, alertTitle, setAlertOpen])
 
      return (
-          <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+          <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }} edges={["top", "bottom"]}>
                <StatusBar barStyle={"dark-content"} />
                <KeyboardAvoidingView
                     style={loginStyles.background}

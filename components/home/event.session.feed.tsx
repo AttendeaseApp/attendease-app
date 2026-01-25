@@ -88,10 +88,10 @@ export default function EventSessionsFeed() {
      const renderEmptyState = () => (
           <View style={styles.emptyStateContainer}>
                <View style={styles.emptyIconContainer}>
-                    <Ionicons name="sparkles-outline" size={64} color="#EEC170" />
+                    <Ionicons name="happy-outline" size={64} color="#E7BB41" />
                </View>
                <ThemedText type="default" style={styles.emptyTitle}>
-                    There are no active events
+                    NO ACTIVE EVENTS FOUND
                </ThemedText>
                <ThemedText type="default" style={styles.emptyDescription}>
                     There are no events scheduled at the moment. Check back later!

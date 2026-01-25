@@ -29,8 +29,8 @@ const PAGES = [
      {
           key: "privacy",
           icon: "shield-checkmark-outline",
-          color: "#2196F3",
-          title: "Your Privacy Matters",
+          color: "#d97757",
+          title: "PRIVACY MATTERS",
           description: [
                "Facial biometrics are required to verify your identity during event registration.",
                "Facial images are processed only to generate a secure facial encoding and are immediately discarded.",
@@ -42,10 +42,13 @@ const PAGES = [
      {
           key: "face",
           icon: "scan-outline",
-          color: "#FF9800",
-          title: "Facial Registration",
-          description:
-               "This is a one-time setup to keep you verified during event registrations. Please ensure you are in a well-lit area.",
+          color: "#FF934F",
+          title: "FACIAL REGISTRATION",
+          description: [
+               "This is a setup to keep you verified during specific event registrations that requires facial verification.",
+               "Before you begin, please ensure you are in a well-lit area and a clear background.",
+               "This process may take a while and multiple retries. Press 'Continue' when you are ready.",
+          ],
      },
 ]
 
@@ -189,7 +192,7 @@ export default function OnboardingScreen() {
                          </ThemedText>
 
                          <View style={styles.descriptionContainer}>
-                              {currentIndex === 1 ? (
+                              {currentIndex === 1 || currentIndex === 2 ? (
                                    <View style={styles.bulletContainer}>
                                         {(currentPage.description as string[]).map(
                                              (item, index) => (
@@ -303,7 +306,7 @@ const styles = StyleSheet.create({
      },
      progressBarFill: {
           height: "100%",
-          backgroundColor: "#4F46E5",
+          backgroundColor: "#000000",
           borderRadius: moderateScale(2),
      },
      scrollContent: {
@@ -368,12 +371,12 @@ const styles = StyleSheet.create({
           width: moderateScale(6),
           height: moderateScale(6),
           borderRadius: moderateScale(3),
-          backgroundColor: "#4F46E5",
+          backgroundColor: "#000000",
      },
      bulletText: {
           flex: 1,
-          fontSize: normalize(15),
-          lineHeight: normalize(22),
+          fontSize: normalize(13),
+          lineHeight: normalize(14),
           opacity: 0.8,
      },
      checkboxWrapper: {
@@ -389,7 +392,7 @@ const styles = StyleSheet.create({
      },
      checkboxText: {
           fontSize: normalize(14),
-          lineHeight: normalize(20),
+          lineHeight: normalize(15),
      },
      footer: {
           paddingHorizontal: moderateScale(24),

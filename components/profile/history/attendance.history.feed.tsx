@@ -93,7 +93,7 @@ export default function AttendanceHistories() {
                          <Ionicons name="alert-circle-outline" size={64} color="#772F1A" />
                     </View>
                     <ThemedText type="default" style={styles.errorTitle}>
-                         Unable to Load History
+                         UNABLE TO LOAD HISTORIES
                     </ThemedText>
                     <ThemedText type="default" style={styles.errorDescription}>
                          There was a problem loading your attendance records. Please try again.
@@ -108,7 +108,7 @@ export default function AttendanceHistories() {
                     <Ionicons name="checkmark-outline" size={64} color="#676F54" />
                </View>
                <ThemedText type="default" style={styles.emptyTitle}>
-                    {hasActiveFilters ? "No Records Found" : "No Attendance Records"}
+                    {hasActiveFilters ? "NO RECORDS FOUND" : "NO ATTENDANCE RECORDS FOUND"}
                </ThemedText>
                <ThemedText type="default" style={styles.emptyDescription}>
                     {hasActiveFilters

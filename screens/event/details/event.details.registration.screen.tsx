@@ -35,6 +35,8 @@ import {
      isRegistrationDisabled,
      handlePostRegistration,
 } from "./utils/registration.utils"
+import { normalize, moderateScale, spacing } from "@/themes/responsive"
+import { Ionicons } from "@expo/vector-icons"
 
 export default function EventDetailsRegistrationScreen() {
      const router = useRouter()
@@ -285,9 +287,12 @@ export default function EventDetailsRegistrationScreen() {
 
      // REGISTRATION BUTTON RENDERER
      const renderRegistrationButton = () => {
-          const buttonText = getButtonText(loading, registrationInProgressRef.current, requireFace)
+          const isRegistered = registrationStatus?.registered ?? false
+          const buttonText = isRegistered
+               ? "REGISTERED"
+               : getButtonText(loading, registrationInProgressRef.current, requireFace)
           const isDisabled = isRegistrationDisabled(
-               registrationStatus?.registered ?? false,
+               isRegistered,
                eventData?.eventStatus ?? "",
                EventStatus
           )
@@ -300,315 +305,382 @@ export default function EventDetailsRegistrationScreen() {
      }
 
      if (loadingEvent || !eventId) {
-          return <ActivityIndicator size="large" color="#2A2C24" />
+          return (
+               <SafeAreaView style={styles.centerContainer}>
+                    <ActivityIndicator size="large" color="#1F2937" />
+               </SafeAreaView>
+          )
      }
 
      return (
-          <SafeAreaView style={{ flex: 1 }}>
+          <SafeAreaView style={styles.container}>
                <StatusBar barStyle="dark-content" />
                <ScrollView
-                    contentContainerStyle={{ paddingBottom: 180 }}
+                    contentContainerStyle={styles.scrollContent}
                     refreshControl={
                          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
                     }
+                    showsVerticalScrollIndicator={false}
                >
-                    <View style={styles.contentWrapper}>
-                         {/* Event Status */}
-                         <View style={styles.infoSection}>
-                              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                    {/* Hero Section */}
+                    <View style={styles.heroSection}>
+                         <View style={styles.statusRow}>
+                              <ThemedText type="caption" style={styles.statusBadge}>
+                                   {eventData?.eventStatus || "N/A"}
+                              </ThemedText>
+                              {liveEventState && shouldMonitorEventStatus && (
+                                   <View style={styles.liveIndicator}>
+                                        <View style={styles.liveDot} />
+                                        <ThemedText type="caption" style={styles.liveText}>
+                                             {liveEventState.statusMessage}
+                                        </ThemedText>
+                                   </View>
+                              )}
+                         </View>
+
+                         <ThemedText type="title" style={styles.eventTitle}>
+                              {eventData?.eventName || "N/A"}
+                         </ThemedText>
+
+                         {eventData?.description && (
+                              <ThemedText type="body2" style={styles.description}>
+                                   {eventData.description}
+                              </ThemedText>
+                         )}
+                    </View>
+
+                    {/* Registration Status */}
+                    {registrationStatus?.registered && (
+                         <View style={styles.section}>
+                              <View style={styles.sectionHeader}>
                                    <ThemedText type="defaultSemiBold">
-                                        {eventData?.eventStatus || "N/A"}
-                                   </ThemedText>
-                                   {liveEventState && shouldMonitorEventStatus && (
-                                        <View>
-                                             <ThemedText
-                                                  type="default"
-                                                  style={styles.liveStatusText}
-                                             >
-                                                  {liveEventState.statusMessage}
-                                             </ThemedText>
-                                        </View>
-                                   )}
-                              </View>
-                         </View>
-
-                         {/* Event Name */}
-                         <View style={styles.infoSection}>
-                              <ThemedText type="title">{eventData?.eventName || "N/A"}</ThemedText>
-                         </View>
-
-                         {/* Registration Status Badge */}
-                         {registrationStatus?.registered && (
-                              <View
-                                   style={[
-                                        styles.statusBadge,
-                                        styles.partialBadge,
-                                        styles.successBadge,
-                                        styles.infoBadge,
-                                   ]}
-                              >
-                                   <ThemedText type="defaultSemiBold" style={styles.statusText}>
                                         {registrationStatus.message}
                                    </ThemedText>
-                                   {registrationStatus.registrationTime && (
-                                        <ThemedText type="default" style={styles.statusSubtext}>
-                                             Registered:{" "}
-                                             {formatDateTime(registrationStatus.registrationTime)}
-                                        </ThemedText>
-                                   )}
-                                   {registrationStatus.registrationLocationName && (
-                                        <ThemedText type="default" style={styles.statusSubtext}>
-                                             Location: {registrationStatus.registrationLocationName}
-                                        </ThemedText>
-                                   )}
+                                   <Ionicons name="checkmark-outline" size={15} color="#1F2937" />
                               </View>
-                         )}
-
-                         {/* Description */}
-                         <View style={styles.infoSection}>
-                              <ThemedText type="defaultSemiBold">Description</ThemedText>
-                              <ThemedText type="default">
-                                   {eventData?.description || "N/A"}
-                              </ThemedText>
-                         </View>
-
-                         {/* Schedule */}
-                         <View style={styles.infoSection}>
-                              <ThemedText type="default">
-                                   Registration starts at exactly{" "}
-                                   {formatDateTime(eventData?.registrationDateTime)}.
-                              </ThemedText>
-                              <ThemedText type="default">
-                                   The event will then proceed to start on{" "}
-                                   {formatDateTime(eventData?.startingDateTime)} and will end on{" "}
-                                   {formatDateTime(eventData?.endingDateTime)}.
-                              </ThemedText>
-                         </View>
-
-                         {/* Eligibility */}
-                         <View style={styles.infoSection}>
-                              <ThemedText type="defaultSemiBold">Eligibility</ThemedText>
-                              {eventData?.eligibleStudents ? (
-                                   <>
-                                        {eventData.eligibleStudents.allStudents ? (
-                                             <ThemedText type="default">
-                                                  Open to all students
+                              {registrationStatus.registrationTime && (
+                                   <View style={styles.detailRow}>
+                                        <ThemedText type="caption" style={styles.detailText}>
+                                             {formatDateTime(registrationStatus.registrationTime)} |{" "}
+                                             <ThemedText type="caption" style={styles.detailText}>
+                                                  {registrationStatus.registrationLocationName}
                                              </ThemedText>
-                                        ) : (
-                                             <View style={{ gap: 8 }}>
-                                                  {eventData.eligibleStudents.cluster?.length &&
-                                                       eventData.eligibleStudents.cluster.length >
-                                                            0 && (
-                                                            <View>
-                                                                 <ThemedText type="defaultSemiBold">
-                                                                      Clusters
-                                                                 </ThemedText>
-                                                                 <ThemedText type="default">
-                                                                      {eventData.eligibleStudents.clusterNames?.join(
-                                                                           ", "
-                                                                      ) ||
-                                                                           eventData.eligibleStudents.cluster?.join(
-                                                                                ", "
-                                                                           )}
-                                                                 </ThemedText>
-                                                            </View>
-                                                       )}
-                                                  {eventData.eligibleStudents.course?.length &&
-                                                       eventData.eligibleStudents.course.length >
-                                                            0 && (
-                                                            <View>
-                                                                 <ThemedText type="defaultSemiBold">
-                                                                      Courses
-                                                                 </ThemedText>
-                                                                 <ThemedText type="default">
-                                                                      {eventData.eligibleStudents.courseNames?.join(
-                                                                           ", "
-                                                                      ) ||
-                                                                           eventData.eligibleStudents.course?.join(
-                                                                                ", "
-                                                                           )}
-                                                                 </ThemedText>
-                                                            </View>
-                                                       )}
-                                                  {eventData.eligibleStudents.sections?.length &&
-                                                       eventData.eligibleStudents.sections.length >
-                                                            0 && (
-                                                            <View>
-                                                                 <ThemedText type="default">
-                                                                      Sections
-                                                                 </ThemedText>
-                                                                 <ThemedText type="defaultSemiBold">
-                                                                      {eventData.eligibleStudents.sectionNames?.join(
-                                                                           ", "
-                                                                      ) ||
-                                                                           eventData.eligibleStudents.sections?.join(
-                                                                                ", "
-                                                                           )}
-                                                                 </ThemedText>
-                                                            </View>
-                                                       )}
-                                             </View>
-                                        )}
-                                   </>
-                              ) : (
-                                   <ThemedText type="defaultSemiBold">N/A</ThemedText>
-                              )}
-                         </View>
-
-                         {/* Strict Location Validation Info */}
-                         {config.strictLocationValidation && (
-                              <View style={styles.infoSection}>
-                                   <ThemedText type="defaultSemiBold">
-                                        Registration Process
-                                   </ThemedText>
-                                   <ThemedText type="default">
-                                        This event uses two-step registration:{"\n"}
-                                        1. Check in at registration area{"\n"}
-                                        2. Proceed to venue (automatic check-in)
-                                   </ThemedText>
-                              </View>
-                         )}
-
-                         {/* Facial & Attendance */}
-                         <View style={styles.infoSection}>
-                              <ThemedText type="defaultSemiBold">Facial Verification</ThemedText>
-                              <ThemedText type="default">
-                                   {config.facialEnabled ? "Required" : "Not Required"}
-                              </ThemedText>
-                         </View>
-
-                         <View style={styles.infoSection}>
-                              <ThemedText type="defaultSemiBold">Attendance Monitoring</ThemedText>
-                              <ThemedText type="default">
-                                   {config.attendanceMonitoringEnabled
-                                        ? "Required"
-                                        : "Not Required"}
-                              </ThemedText>
-                         </View>
-
-                         {/* Locations */}
-                         <View style={styles.infoSection}>
-                              <ThemedText type="defaultSemiBold">Registration Location</ThemedText>
-                              {eventData?.registrationLocation ? (
-                                   <ThemedText type="default">
-                                        {eventData.registrationLocation.locationName ||
-                                             "Unavailable"}
-                                        <ThemedText type="default" style={styles.environmentBadge}>
-                                             {" "}
-                                             • {eventData.registrationLocation.environment || "N/A"}
-                                        </ThemedText>
-                                   </ThemedText>
-                              ) : (
-                                   <ThemedText type="defaultSemiBold">Unavailable</ThemedText>
-                              )}
-                         </View>
-
-                         <View style={styles.infoSection}>
-                              <ThemedText type="defaultSemiBold">Event Venue</ThemedText>
-                              {eventData?.venueLocation ? (
-                                   <ThemedText type="default">
-                                        {eventData.venueLocation.locationName || "Unavailable"}
-                                        <ThemedText type="default" style={styles.environmentBadge}>
-                                             {" "}
-                                             • {eventData.venueLocation.environment || "N/A"}
-                                        </ThemedText>
-                                   </ThemedText>
-                              ) : (
-                                   <ThemedText type="defaultSemiBold">Unavailable</ThemedText>
-                              )}
-                         </View>
-
-                         {/* Auto-Upgrade Status */}
-                         {isPollingForUpgrade && autoUpgradeMessage && (
-                              <View style={styles.autoUpgradeContainer}>
-                                   <ActivityIndicator size="small" color="#2563eb" />
-                                   <ThemedText type="default" style={styles.autoUpgradeText}>
-                                        {autoUpgradeMessage}
-                                   </ThemedText>
-                              </View>
-                         )}
-
-                         {/* Attendance Tracking Status */}
-                         <View style={styles.eventRegistrationInfoSection}>
-                              {config.attendanceMonitoringEnabled ? (
-                                   <>
-                                        {isTrackingThisEvent ? (
-                                             <View style={styles.pingStatusContainer}>
-                                                  <ThemedText type="default">
-                                                       Attendance tracking is active for this event.
-                                                  </ThemedText>
-                                                  <ThemedText type="default">
-                                                       Background pings are being sent while the
-                                                       event is ongoing.
-                                                  </ThemedText>
-                                             </View>
-                                        ) : (
-                                             <View style={styles.infoSection}>
-                                                  <ThemedText type="defaultSemiBold">
-                                                       Attendance Tracking Status
-                                                  </ThemedText>
-                                                  <ThemedText type="default">
-                                                       {registrationStatus?.registered
-                                                            ? "Tracking will begin when event starts."
-                                                            : "Inactive, click register below to begin tracking."}
-                                                  </ThemedText>
-                                             </View>
-                                        )}
-                                   </>
-                              ) : (
-                                   <View style={styles.infoSection}>
-                                        <ThemedText type="defaultSemiBold">
-                                             Attendance Tracking
-                                        </ThemedText>
-                                        <ThemedText type="default">
-                                             Location monitoring is not required for this event.
-                                             Registration only.
                                         </ThemedText>
                                    </View>
                               )}
+                         </View>
+                    )}
 
-                              {/* Location verification status with loading indicator */}
-                              {locationStatus && (
-                                   <View style={styles.locationStatusContainer}>
-                                        {verifyingLocation && (
-                                             <ActivityIndicator size="small" color="#6B7280" />
-                                        )}
-                                        <ThemedText
-                                             type="default"
-                                             style={[
-                                                  styles.locationStatusText,
-                                                  locationStatus.isInside &&
-                                                       styles.locationInsideText,
-                                                  !locationStatus.isInside &&
-                                                       styles.locationOutsideText,
-                                             ]}
-                                        >
-                                             {locationStatus.message}
-                                        </ThemedText>
-                                   </View>
-                              )}
+                    {/* Schedule */}
+                    <View style={styles.section}>
+                         <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>
+                              EVENT SCHEDULE
+                         </ThemedText>
+                         <View style={styles.scheduleItem}>
+                              <ThemedText type="caption" style={styles.label}>
+                                   Registration
+                              </ThemedText>
+                              <ThemedText type="body2" style={styles.value}>
+                                   {formatDateTime(eventData?.registrationDateTime)}
+                              </ThemedText>
+                         </View>
+                         <View style={styles.scheduleItem}>
+                              <ThemedText type="caption" style={styles.label}>
+                                   Event Start
+                              </ThemedText>
+                              <ThemedText type="body2" style={styles.value}>
+                                   {formatDateTime(eventData?.startingDateTime)}
+                              </ThemedText>
+                         </View>
+                         <View style={styles.scheduleItem}>
+                              <ThemedText type="caption" style={styles.label}>
+                                   Event End
+                              </ThemedText>
+                              <ThemedText type="body2" style={styles.value}>
+                                   {formatDateTime(eventData?.endingDateTime)}
+                              </ThemedText>
                          </View>
                     </View>
+
+                    {/* Locations */}
+                    <View style={styles.section}>
+                         <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>
+                              LOCATIONS
+                         </ThemedText>
+                         <View style={styles.locationsRow}>
+                              <View style={styles.locationItem}>
+                                   <ThemedText type="caption" style={styles.label}>
+                                        Registration
+                                   </ThemedText>
+                                   <ThemedText type="body2" style={styles.locationName}>
+                                        {eventData?.registrationLocation?.locationName || "N/A"}
+                                   </ThemedText>
+                                   {eventData?.registrationLocation?.environment && (
+                                        <ThemedText type="caption" style={styles.environmentText}>
+                                             {eventData.registrationLocation.environment}
+                                        </ThemedText>
+                                   )}
+                              </View>
+
+                              <View style={styles.locationDivider} />
+
+                              <View style={styles.locationItem}>
+                                   <ThemedText type="caption" style={styles.label}>
+                                        Venue
+                                   </ThemedText>
+                                   <ThemedText type="body2" style={styles.locationName}>
+                                        {eventData?.venueLocation?.locationName || "N/A"}
+                                   </ThemedText>
+                                   {eventData?.venueLocation?.environment && (
+                                        <ThemedText type="caption" style={styles.environmentText}>
+                                             {eventData.venueLocation.environment}
+                                        </ThemedText>
+                                   )}
+                              </View>
+                         </View>
+                    </View>
+
+                    {/* Requirements */}
+                    <View style={styles.section}>
+                         <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>
+                              REGISTRATION REQUIREMENTS
+                         </ThemedText>
+                         <View style={styles.requirementRow}>
+                              <Ionicons
+                                   name={
+                                        config.facialEnabled
+                                             ? "checkmark-circle-outline"
+                                             : "close-circle-outline"
+                                   }
+                                   size={18}
+                                   color="#1F2937"
+                              />
+                              <ThemedText type="body2" style={styles.requirementText}>
+                                   Facial Verification
+                              </ThemedText>
+                         </View>
+                         <View style={styles.requirementRow}>
+                              <Ionicons
+                                   name={
+                                        config.attendanceMonitoringEnabled
+                                             ? "checkmark-circle-outline"
+                                             : "close-circle-outline"
+                                   }
+                                   size={18}
+                                   color="#1F2937"
+                              />
+                              <ThemedText type="body2" style={styles.requirementText}>
+                                   Attendance Monitoring
+                              </ThemedText>
+                         </View>
+                         {config.strictLocationValidation && (
+                              <View style={styles.requirementRow}>
+                                   <Ionicons
+                                        name="checkmark-circle-outline"
+                                        size={18}
+                                        color="#1F2937"
+                                   />
+                                   <ThemedText type="body2" style={styles.requirementText}>
+                                        Two-Step Registration
+                                   </ThemedText>
+                              </View>
+                         )}
+                    </View>
+
+                    {/* Auto-Upgrade Status */}
+                    {isPollingForUpgrade && autoUpgradeMessage && (
+                         <View style={styles.statusNotice}>
+                              <ActivityIndicator size="small" color="#1F2937" />
+                              <ThemedText type="body2" style={styles.noticeText}>
+                                   {autoUpgradeMessage}
+                              </ThemedText>
+                         </View>
+                    )}
+
+                    {/* Tracking Status */}
+                    {isTrackingThisEvent && (
+                         <View style={styles.statusNotice}>
+                              <View style={styles.trackingDot} />
+                              <View style={{ flex: 1 }}>
+                                   <ThemedText type="defaultSemiBold">
+                                        Attendance Tracking Active
+                                   </ThemedText>
+                                   <ThemedText type="caption" style={styles.label}>
+                                        Background monitoring is running
+                                   </ThemedText>
+                              </View>
+                         </View>
+                    )}
+
+                    {/* Location Status */}
+                    {locationStatus && (
+                         <View style={styles.statusNotice}>
+                              <Ionicons
+                                   name={
+                                        locationStatus.isInside
+                                             ? "checkmark-circle-outline"
+                                             : "alert-circle-outline"
+                                   }
+                                   size={18}
+                                   color="#1F2937"
+                              />
+                              <ThemedText type="body2" style={styles.noticeText}>
+                                   {locationStatus.message}
+                              </ThemedText>
+                              {verifyingLocation && (
+                                   <ActivityIndicator size="small" color="#6B7280" />
+                              )}
+                         </View>
+                    )}
                </ScrollView>
+
+               {/* Fixed Button */}
                <View style={styles.fixedButtonContainer}>{renderRegistrationButton()}</View>
           </SafeAreaView>
      )
 }
 
 const styles = StyleSheet.create({
-     contentWrapper: {
-          padding: 16,
-          paddingBottom: 24,
-          borderBottomLeftRadius: 16,
-          borderBottomRightRadius: 16,
-          zIndex: 13,
+     container: {
+          flex: 1,
+          backgroundColor: "#FFFFFF",
      },
-     infoSection: {
-          marginBlock: 16,
+     centerContainer: {
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: "#FFFFFF",
      },
-     eventRegistrationInfoSection: {
-          marginTop: 100,
-          gap: 8,
+     scrollContent: {
+          paddingBottom: moderateScale(120),
+     },
+     heroSection: {
+          padding: spacing.md,
+          paddingTop: spacing.xl,
+     },
+     statusRow: {
+          flexDirection: "row",
+          alignItems: "center",
+          gap: spacing.sm,
+          marginBottom: spacing.md,
+     },
+     statusBadge: {
+          color: "#6B7280",
+          textTransform: "uppercase",
+          letterSpacing: 0.5,
+          fontSize: normalize(11),
+          fontWeight: "600",
+     },
+     liveIndicator: {
+          flexDirection: "row",
+          alignItems: "center",
+          gap: spacing.xs,
+     },
+     liveDot: {
+          width: moderateScale(6),
+          height: moderateScale(6),
+          borderRadius: moderateScale(3),
+          backgroundColor: "#1F2937",
+     },
+     liveText: {
+          color: "#1F2937",
+          fontSize: normalize(11),
+          textTransform: "uppercase",
+          letterSpacing: 0.5,
+          fontWeight: "600",
+     },
+     eventTitle: {
+          fontSize: normalize(26),
+          lineHeight: normalize(32),
+          marginBottom: spacing.sm,
+          color: "#1F2937",
+     },
+     description: {
+          color: "#6B7280",
+          lineHeight: normalize(22),
+     },
+     section: {
+          padding: spacing.md,
+     },
+     sectionTitle: {
+          marginBottom: spacing.sm,
+          color: "#1F2937",
+     },
+     sectionHeader: {
+          flexDirection: "row",
+          alignItems: "center",
+          gap: spacing.sm,
+     },
+     detailRow: {
+          flexDirection: "row",
+          alignItems: "center",
+          gap: spacing.sm,
+          marginTop: spacing.xs,
+     },
+     detailText: {
+          color: "#6B7280",
+     },
+     scheduleItem: {
+          paddingVertical: spacing.sm,
+     },
+     label: {
+          color: "#6B7280",
+          marginBottom: spacing.xs,
+          fontSize: normalize(12),
+     },
+     value: {
+          color: "#1F2937",
+     },
+     locationsRow: {
+          flexDirection: "row",
+          gap: spacing.lg,
+     },
+     locationItem: {
+          flex: 1,
+     },
+     locationDivider: {
+          width: 1,
+          backgroundColor: "#E5E7EB",
+     },
+     locationName: {
+          color: "#1F2937",
+          marginBottom: spacing.xs,
+     },
+     environmentText: {
+          color: "#6B7280",
+          fontSize: normalize(11),
+     },
+     requirementRow: {
+          flexDirection: "row",
+          alignItems: "center",
+          gap: spacing.sm,
+          paddingVertical: spacing.sm,
+     },
+     requirementText: {
+          flex: 1,
+          color: "#1F2937",
+     },
+     statusNotice: {
+          flexDirection: "row",
+          alignItems: "center",
+          marginHorizontal: spacing.lg,
+          marginTop: spacing.lg,
+          padding: spacing.md,
+          backgroundColor: "#F9FAFB",
+          borderWidth: 1,
+          borderColor: "#E5E7EB",
+          borderRadius: moderateScale(8),
+          gap: spacing.sm,
+     },
+     trackingDot: {
+          width: moderateScale(8),
+          height: moderateScale(8),
+          borderRadius: moderateScale(4),
+          backgroundColor: "#1F2937",
+     },
+     noticeText: {
+          flex: 1,
+          color: "#1F2937",
      },
      fixedButtonContainer: {
           position: "absolute",
@@ -617,75 +689,8 @@ const styles = StyleSheet.create({
           right: 0,
           padding: 16,
           paddingBottom: 30,
-     },
-     pingStatusContainer: {
-          flexDirection: "column",
-          padding: 12,
-          borderRadius: 8,
-          marginBottom: 16,
-          backgroundColor: "#D2CCA1",
-     },
-     autoUpgradeContainer: {
-          flexDirection: "row",
-          alignItems: "center",
-          padding: 12,
-          borderRadius: 8,
-          marginBottom: 16,
-          backgroundColor: "#DBEAFE",
-          gap: 8,
-     },
-     autoUpgradeText: {
-          color: "#1e40af",
-          flex: 1,
-     },
-     statusBadge: {
-          padding: 16,
-          borderRadius: 8,
-          marginBottom: 16,
-          borderWidth: 1,
-     },
-     partialBadge: {
-          backgroundColor: "#FEF3C7",
-          borderColor: "#F59E0B",
-     },
-     successBadge: {
-          backgroundColor: "#D1FAE5",
-          borderColor: "#10B981",
-     },
-     infoBadge: {
-          backgroundColor: "#E0E7FF",
-          borderColor: "#6366F1",
-     },
-     statusText: {
-          marginBottom: 4,
-     },
-     statusSubtext: {
-          fontSize: 12,
-          opacity: 0.8,
-          marginTop: 2,
-     },
-     environmentBadge: {
-          fontSize: 12,
-          color: "#6B7280",
-     },
-     liveStatusText: {
-          color: "#991B1B",
-          fontSize: 13,
-     },
-     locationStatusContainer: {
-          flexDirection: "row",
-          alignItems: "center",
-          padding: 12,
-          gap: 8,
-     },
-     locationStatusText: {
-          flex: 1,
-          fontSize: 14,
-     },
-     locationInsideText: {
-          color: "#059669",
-     },
-     locationOutsideText: {
-          color: "#DC2626",
+          backgroundColor: "#FFFFFF",
+          borderTopWidth: 1,
+          borderTopColor: "#E5E7EB",
      },
 })
