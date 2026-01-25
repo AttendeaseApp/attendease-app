@@ -446,7 +446,7 @@ export default function EventDetailsRegistrationScreen() {
                <SafeAreaView style={styles.centerContainer}>
                     <ActivityIndicator size="large" color="#000000" />
                     <ThemedText type="default" style={{ marginTop: 12, opacity: 0.6 }}>
-                         GETTING EVENT DETAILS ...
+                         GETTING EVENT DETAILS...
                     </ThemedText>
                </SafeAreaView>
           )

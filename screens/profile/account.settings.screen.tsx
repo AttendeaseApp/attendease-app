@@ -159,7 +159,7 @@ export default function AccountSettingsScreen() {
                               >
                                    <Ionicons name="arrow-back" size={24} color="#111827" />
                               </TouchableOpacity>
-                              <ThemedText type="title">SETTINGS</ThemedText>
+                              <ThemedText type="subtitle">SETTINGS</ThemedText>
                          </View>
                     </View>
 
@@ -224,7 +224,7 @@ export default function AccountSettingsScreen() {
                               <View style={styles.settingsGroup}>
                                    <TouchableOpacity
                                         style={styles.settingItem}
-                                        onPress={() => alert("Privacy policy coming soon")}
+                                        onPress={() => router.push("/(routes)/(account)/privacy")}
                                    >
                                         <View style={styles.settingTextContainer}>
                                              <ThemedText type="default" style={styles.settingTitle}>

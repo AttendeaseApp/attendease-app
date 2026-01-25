@@ -80,7 +80,7 @@ export default function AttendanceHistories() {
                <View style={styles.centerContainer}>
                     <ActivityIndicator size="large" color="#000000" />
                     <ThemedText type="default" style={{ marginTop: 12, opacity: 0.6 }}>
-                         LOADING YOUR ATTENDANCE RECORDS ...
+                         LOADING YOUR ATTENDANCE RECORDS...
                     </ThemedText>
                </View>
           )
@@ -108,7 +108,7 @@ export default function AttendanceHistories() {
                     <Ionicons name="checkmark-outline" size={64} color="#676F54" />
                </View>
                <ThemedText type="default" style={styles.emptyTitle}>
-                    {hasActiveFilters ? "NO RECORDS FOUND" : "NO ATTENDANCE RECORDS FOUND"}
+                    {hasActiveFilters ? "~ NO RECORDS FOUND ~" : "~ NO ATTENDANCE RECORDS FOUND ~"}
                </ThemedText>
                <ThemedText type="default" style={styles.emptyDescription}>
                     {hasActiveFilters
@@ -129,7 +129,7 @@ export default function AttendanceHistories() {
           <View style={styles.headerContainer}>
                <View style={styles.headerTop}>
                     <ThemedText type="subtitle" style={styles.headerTitle}>
-                         Attendance Histories
+                         ATTENDANCE HISTORIES
                     </ThemedText>
                     <TouchableOpacity
                          style={styles.filterButton}
