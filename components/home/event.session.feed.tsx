@@ -77,9 +77,9 @@ export default function EventSessionsFeed() {
      if (loadingEvents) {
           return (
                <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#27548A" />
+                    <ActivityIndicator size="large" color="#000000" />
                     <ThemedText type="default" style={{ marginTop: 12, opacity: 0.6 }}>
-                         Loading events...
+                         LOADING EVENTS ...
                     </ThemedText>
                </View>
           )

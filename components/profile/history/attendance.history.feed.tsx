@@ -78,9 +78,9 @@ export default function AttendanceHistories() {
      if (loading) {
           return (
                <View style={styles.centerContainer}>
-                    <ActivityIndicator size="large" color="#27548A" />
-                    <ThemedText type="default" style={styles.loadingText}>
-                         Loading attendance history...
+                    <ActivityIndicator size="large" color="#000000" />
+                    <ThemedText type="default" style={{ marginTop: 12, opacity: 0.6 }}>
+                         LOADING YOUR ATTENDANCE RECORDS ...
                     </ThemedText>
                </View>
           )

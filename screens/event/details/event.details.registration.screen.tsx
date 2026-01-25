@@ -39,6 +39,8 @@ import { normalize, moderateScale, spacing } from "@/themes/responsive"
 import { Ionicons } from "@expo/vector-icons"
 import { AttendanceStatusEnum } from "@/domain/enums/attendance/status/attendance.status.enum"
 import { verifyVenueLocationWithAutoUpgrade } from "@/server/service/api/geolocation/verify-venue-location-with-auto-upgrade"
+import { LinearGradient } from "expo-linear-gradient"
+import { BlurView } from "expo-blur"
 
 export default function EventDetailsRegistrationScreen() {
      const router = useRouter()
@@ -69,6 +71,24 @@ export default function EventDetailsRegistrationScreen() {
           locationLoading,
           register: performRegistration,
      } = useEventRegistration(eventId || "")
+
+     const getStatusGradient = (status: string) => {
+          switch (status) {
+               case EventStatus.ONGOING:
+                    return ["#10B98160", "#10B98140", "#10B98120", "transparent"] as const
+               case EventStatus.REGISTRATION:
+                    return ["#F59E0B60", "#F59E0B40", "#F59E0B20", "transparent"] as const
+               case EventStatus.UPCOMING:
+                    return ["#3B82F660", "#3B82F640", "#3B82F620", "transparent"] as const
+               case EventStatus.CANCELLED:
+                    return ["#EF444460", "#EF444440", "#EF444420", "transparent"] as const
+               case EventStatus.CONCLUDED:
+               case EventStatus.FINALIZED:
+                    return ["#6B728060", "#6B728040", "#6B728020", "transparent"] as const
+               default:
+                    return ["#6B728060", "#6B728040", "#6B728020", "transparent"] as const
+          }
+     }
 
      // EVENT CONFIGS
      const config = getRegistrationConfig(eventData)
@@ -424,7 +444,10 @@ export default function EventDetailsRegistrationScreen() {
      if (loadingEvent || !eventId) {
           return (
                <SafeAreaView style={styles.centerContainer}>
-                    <ActivityIndicator size="large" color="#1F2937" />
+                    <ActivityIndicator size="large" color="#000000" />
+                    <ThemedText type="default" style={{ marginTop: 12, opacity: 0.6 }}>
+                         GETTING EVENT DETAILS ...
+                    </ThemedText>
                </SafeAreaView>
           )
      }
@@ -432,6 +455,17 @@ export default function EventDetailsRegistrationScreen() {
      return (
           <SafeAreaView style={styles.container}>
                <StatusBar barStyle="dark-content" />
+
+               <View style={styles.gradientContainer}>
+                    <LinearGradient
+                         colors={getStatusGradient(eventData?.eventStatus || "")}
+                         start={{ x: 1, y: 0 }}
+                         end={{ x: 0, y: 1 }}
+                         locations={[0, 0.3, 0.6, 1]}
+                         style={styles.gradientBackground}
+                    />
+               </View>
+
                <ScrollView
                     contentContainerStyle={styles.scrollContent}
                     refreshControl={
@@ -868,5 +902,17 @@ const styles = StyleSheet.create({
           fontSize: normalize(11),
           textAlign: "center",
           lineHeight: normalize(16),
+     },
+     gradientContainer: {
+          position: "absolute",
+          top: 0,
+          right: 0,
+          left: 0,
+          bottom: 0,
+          zIndex: 0,
+     },
+     gradientBackground: {
+          flex: 1,
+          opacity: 0.4,
      },
 })
