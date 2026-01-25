@@ -37,6 +37,8 @@ import {
 } from "./utils/registration.utils"
 import { normalize, moderateScale, spacing } from "@/themes/responsive"
 import { Ionicons } from "@expo/vector-icons"
+import { AttendanceStatusEnum } from "@/domain/enums/attendance/status/attendance.status.enum"
+import { verifyVenueLocationWithAutoUpgrade } from "@/server/service/api/geolocation/verify-venue-location-with-auto-upgrade"
 
 export default function EventDetailsRegistrationScreen() {
      const router = useRouter()
@@ -81,20 +83,16 @@ export default function EventDetailsRegistrationScreen() {
           longitude
      )
 
-     const {
-          isPollingForUpgrade,
-          autoUpgradeMessage,
-          startAutoUpgradePolling,
-          stopAutoUpgradePolling,
-     } = useAutoUpgradePolling(
-          eventId,
-          latitude,
-          longitude,
-          shouldStartTracking,
-          eventData,
-          startTracking,
-          (status) => setRegistrationStatus(status)
-     )
+     const { isPollingForUpgrade, startAutoUpgradePolling, stopAutoUpgradePolling } =
+          useAutoUpgradePolling(
+               eventId,
+               latitude,
+               longitude,
+               shouldStartTracking,
+               eventData,
+               startTracking,
+               (status) => setRegistrationStatus(status)
+          )
 
      const { registrationStatus, checkingStatus, setRegistrationStatus } = useRegistrationStatus({
           eventId,
@@ -288,9 +286,63 @@ export default function EventDetailsRegistrationScreen() {
      // REGISTRATION BUTTON RENDERER
      const renderRegistrationButton = () => {
           const isRegistered = registrationStatus?.registered ?? false
-          const buttonText = isRegistered
-               ? "REGISTERED"
-               : getButtonText(loading, registrationInProgressRef.current, requireFace)
+          const isPartiallyRegistered =
+               registrationStatus?.attendanceStatus === AttendanceStatusEnum.PARTIALLY_REGISTERED
+          if (isPartiallyRegistered && config.strictLocationValidation) {
+               return (
+                    <View style={styles.twoStepButtonContainer}>
+                         {/* Step Progress Indicator */}
+                         <View style={styles.stepProgressBar}>
+                              <View style={styles.stepCompleted}>
+                                   <Ionicons name="checkmark-circle" size={16} color="#d97757" />
+                                   <ThemedText type="caption" style={styles.stepText}>
+                                        Step 1
+                                   </ThemedText>
+                              </View>
+                              <View style={styles.stepConnector} />
+                              <View style={styles.stepPending}>
+                                   <View style={styles.stepCircle} />
+                                   <ThemedText type="caption" style={styles.stepTextPending}>
+                                        Step 2
+                                   </ThemedText>
+                              </View>
+                         </View>
+
+                         {/* Venue Registration Button */}
+                         <Button
+                              variant="solid"
+                              onPress={handleManualVenueRegistration}
+                              disabled={loading || verifyingLocation}
+                         >
+                              {loading || verifyingLocation ? (
+                                   <ActivityIndicator size="small" color="#FFFFFF" />
+                              ) : (
+                                   <>
+                                        <ButtonText>Complete Registration at Venue</ButtonText>
+                                   </>
+                              )}
+                         </Button>
+                    </View>
+               )
+          }
+
+          // FULLY REGISTERED
+          if (isRegistered) {
+               return (
+                    <Button variant="solid" disabled>
+                         <ButtonText>REGISTERED</ButtonText>
+                         <Ionicons
+                              name="checkmark-outline"
+                              size={18}
+                              color="#FFFFFF"
+                              style={{ marginRight: 8 }}
+                         />
+                    </Button>
+               )
+          }
+
+          // INITIAL
+          const buttonText = getButtonText(loading, registrationInProgressRef.current, requireFace)
           const isDisabled = isRegistrationDisabled(
                isRegistered,
                eventData?.eventStatus ?? "",
@@ -303,6 +355,71 @@ export default function EventDetailsRegistrationScreen() {
                </Button>
           )
      }
+
+     const handleManualVenueRegistration = useCallback(async () => {
+          if (latitude === null || longitude === null) {
+               Alert.alert("Location Required", "Please ensure location services are enabled.")
+               return
+          }
+
+          try {
+               const response = await verifyVenueLocationWithAutoUpgrade(
+                    eventId,
+                    latitude,
+                    longitude
+               )
+
+               if (response.autoUpgraded) {
+                    stopAutoUpgradePolling()
+
+                    Alert.alert("Registration Completed!", response.message, [
+                         {
+                              text: "OK",
+                              onPress: async () => {
+                                   const updatedStatus = await checkEventRegistrationStatus(eventId)
+                                   setRegistrationStatus(updatedStatus)
+
+                                   if (
+                                        shouldStartTracking &&
+                                        eventData?.venueLocation?.locationId
+                                   ) {
+                                        startTracking(eventId, eventData.venueLocation.locationId)
+                                   }
+                              },
+                         },
+                    ])
+               } else if (response.inside) {
+                    Alert.alert(
+                         "Location Verified",
+                         "You're at the venue, but registration couldn't be completed. Please ensure you've completed the registration location step first.",
+                         [{ text: "OK" }]
+                    )
+               } else {
+                    Alert.alert(
+                         "Not at Venue",
+                         response.message ||
+                              "You must be at the event venue to complete registration.",
+                         [{ text: "OK" }]
+                    )
+               }
+          } catch (error) {
+               console.error("Manual venue registration failed:", error)
+               Alert.alert(
+                    "Registration Failed",
+                    "Unable to complete venue registration. Please try again.",
+                    [{ text: "OK" }]
+               )
+          }
+     }, [
+          eventId,
+          latitude,
+          longitude,
+          stopAutoUpgradePolling,
+          shouldStartTracking,
+          eventData,
+          startTracking,
+          setRegistrationStatus,
+     ])
 
      if (loadingEvent || !eventId) {
           return (
@@ -486,16 +603,6 @@ export default function EventDetailsRegistrationScreen() {
                               </View>
                          )}
                     </View>
-
-                    {/* Auto-Upgrade Status */}
-                    {isPollingForUpgrade && autoUpgradeMessage && (
-                         <View style={styles.statusNotice}>
-                              <ActivityIndicator size="small" color="#1F2937" />
-                              <ThemedText type="body2" style={styles.noticeText}>
-                                   {autoUpgradeMessage}
-                              </ThemedText>
-                         </View>
-                    )}
 
                     {/* Tracking Status */}
                     {isTrackingThisEvent && (
@@ -687,10 +794,79 @@ const styles = StyleSheet.create({
           bottom: 0,
           left: 0,
           right: 0,
-          padding: 16,
-          paddingBottom: 30,
+          padding: spacing.lg,
+          paddingBottom: spacing.xl,
           backgroundColor: "#FFFFFF",
           borderTopWidth: 1,
           borderTopColor: "#E5E7EB",
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.05,
+          shadowRadius: 8,
+          elevation: 4,
+     },
+
+     twoStepButtonContainer: {
+          gap: spacing.sm,
+     },
+
+     stepProgressBar: {
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+          marginBottom: spacing.xs,
+          paddingHorizontal: spacing.md,
+     },
+
+     stepCompleted: {
+          flexDirection: "row",
+          alignItems: "center",
+          gap: spacing.xs,
+     },
+
+     stepText: {
+          color: "#d97757",
+          fontSize: normalize(13),
+          fontWeight: "600",
+          textTransform: "uppercase",
+          letterSpacing: 0.5,
+     },
+
+     stepConnector: {
+          flex: 1,
+          height: 2,
+          backgroundColor: "#E5E7EB",
+          marginHorizontal: spacing.sm,
+          maxWidth: moderateScale(60),
+     },
+
+     stepPending: {
+          flexDirection: "row",
+          alignItems: "center",
+          gap: spacing.xs,
+     },
+
+     stepCircle: {
+          width: moderateScale(16),
+          height: moderateScale(16),
+          borderRadius: moderateScale(8),
+          borderWidth: 2,
+          borderColor: "#D1D5DB",
+          backgroundColor: "#FFFFFF",
+     },
+
+     stepTextPending: {
+          color: "#9CA3AF",
+          fontSize: normalize(12),
+          fontWeight: "600",
+          textTransform: "uppercase",
+          letterSpacing: 0.5,
+     },
+
+     helperText: {
+          color: "#6B7280",
+          fontSize: normalize(11),
+          textAlign: "center",
+          lineHeight: normalize(16),
      },
 })

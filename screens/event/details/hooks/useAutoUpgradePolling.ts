@@ -120,9 +120,7 @@ export function useAutoUpgradePolling(
 
           console.log("[AutoUpgrade] Starting polling")
           setIsPollingForUpgrade(true)
-          setAutoUpgradeMessage(
-               "Walking to venue? We'll automatically check you in when you arrive!"
-          )
+          setAutoUpgradeMessage(null)
           upgradeAttemptedRef.current = false
 
           checkForUpgrade()
