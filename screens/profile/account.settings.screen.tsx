@@ -100,16 +100,6 @@ export default function AccountSettingsScreen() {
           },
      ]
 
-     const registrationSettings = [
-          {
-               title: "Auto-Register for Events",
-               description: "Automatically register when facial verification is not required",
-               type: "toggle" as const,
-               value: autoRegisterEnabled,
-               onToggle: handleAutoRegisterToggle,
-          },
-     ]
-
      const renderSettingItem = (setting: any, index: number, array: any[]) => {
           const isLast = index === array.length - 1
 
@@ -169,7 +159,7 @@ export default function AccountSettingsScreen() {
                               >
                                    <Ionicons name="arrow-back" size={24} color="#111827" />
                               </TouchableOpacity>
-                              <ThemedText type="title">SETTINGS</ThemedText>
+                              <ThemedText type="subtitle">SETTINGS</ThemedText>
                          </View>
                     </View>
 
@@ -182,17 +172,6 @@ export default function AccountSettingsScreen() {
                               <View style={styles.settingsGroup}>
                                    {securitySettings.map((setting, index) =>
                                         renderSettingItem(setting, index, securitySettings)
-                                   )}
-                              </View>
-                         </View>
-
-                         <View style={styles.section}>
-                              <ThemedText type="subtitle" style={styles.sectionTitle}>
-                                   Event Registration
-                              </ThemedText>
-                              <View style={styles.settingsGroup}>
-                                   {registrationSettings.map((setting, index) =>
-                                        renderSettingItem(setting, index, registrationSettings)
                                    )}
                               </View>
                          </View>
@@ -245,7 +224,7 @@ export default function AccountSettingsScreen() {
                               <View style={styles.settingsGroup}>
                                    <TouchableOpacity
                                         style={styles.settingItem}
-                                        onPress={() => alert("Privacy policy coming soon")}
+                                        onPress={() => router.push("/(routes)/(account)/privacy")}
                                    >
                                         <View style={styles.settingTextContainer}>
                                              <ThemedText type="default" style={styles.settingTitle}>
@@ -338,19 +317,6 @@ export default function AccountSettingsScreen() {
                                         </ThemedText>
                                    </View>
                                    <View style={styles.settingItemBorder} />
-                                   <TouchableOpacity
-                                        style={styles.infoItem}
-                                        onPress={() => alert("Terms of Service coming soon")}
-                                   >
-                                        <ThemedText type="default" style={styles.infoLabel}>
-                                             Terms of Service
-                                        </ThemedText>
-                                        <Ionicons
-                                             name="chevron-forward"
-                                             size={20}
-                                             color="#9CA3AF"
-                                        />
-                                   </TouchableOpacity>
                               </View>
                          </View>
                     </View>

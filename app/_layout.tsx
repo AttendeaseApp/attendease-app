@@ -2,11 +2,12 @@ import React, { useCallback, useEffect, useState } from "react"
 import { SplashScreen, Stack, useRouter, useSegments } from "expo-router"
 import { ThemeProvider } from "@/context/theme.context"
 import { AttendanceTrackingProvider } from "@/store/attendance/tracking/attendance.tracking.context"
-import { LogBox, Alert } from "react-native"
+import { LogBox, Alert, View, ActivityIndicator } from "react-native"
 import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { jwtDecode } from "jwt-decode"
 import { DecodedToken } from "@/domain/interface/token/token"
+import { startAttendanceTracking } from "@/utils/attendance/tracking/attendance-tracking-manager"
 import "@/global.css"
 
 SplashScreen.preventAutoHideAsync()
@@ -45,7 +46,9 @@ function RootLayoutNav() {
      useProtectedRoute(authState, router)
 
      useEffect(() => {
-          checkAuthStatus()
+          ;(async () => {
+               await checkAuthStatus()
+          })()
      }, [])
 
      useEffect(() => {
@@ -78,6 +81,18 @@ function RootLayoutNav() {
           },
           [router]
      )
+
+     useEffect(() => {
+          async function restoreTracking() {
+               const saved = await AsyncStorage.getItem("attendanceTracking")
+               if (!saved) return
+
+               const { eventId, locationId } = JSON.parse(saved)
+               await startAttendanceTracking(eventId, locationId)
+          }
+
+          restoreTracking()
+     }, [])
 
      useEffect(() => {
           if (reminderOpen) {
@@ -165,7 +180,11 @@ function RootLayoutNav() {
      }
 
      if (authState.isLoading) {
-          return null
+          return (
+               <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+                    <ActivityIndicator size="large" />
+               </View>
+          )
      }
 
      return (

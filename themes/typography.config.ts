@@ -1,4 +1,4 @@
-import { fontSizes } from "@/themes/app.constant"
+import { getFontSize, getLineHeight } from "./font-sizes"
 import { TextStyle } from "react-native"
 
 export type TextType =
@@ -10,76 +10,135 @@ export type TextType =
      | "subtitle"
      | "loginTitle"
      | "link"
-
-type FontWeight = NonNullable<TextStyle["fontWeight"]>
+     | "caption"
+     | "overline"
+     | "h1"
+     | "h2"
+     | "h3"
+     | "h4"
+     | "body1"
+     | "body2"
 
 type TypographyStyle = {
      fontSize: number
-     lineHeight?: number
-     fontWeight: FontWeight
-     fontVariationSettings?: string
-     maxFontSize?: number
+     lineHeight: number
+     fontWeight: NonNullable<TextStyle["fontWeight"]>
+     letterSpacing?: number
 }
 
+/**
+ * Comprehensive typography system
+ * All values are responsive and scale across devices
+ */
 export const typography: Record<TextType, TypographyStyle> = {
+     // Original text types (preserved for backward compatibility)
      default: {
-          fontSize: fontSizes.FONT19,
-          lineHeight: Math.round(fontSizes.FONT19 * (28 / 19)),
+          fontSize: getFontSize(16),
+          lineHeight: getLineHeight(getFontSize(16)),
           fontWeight: "400",
-          fontVariationSettings: "'opsz' 19",
-          maxFontSize: fontSizes.FONT10,
      },
-
      defaultSemiBold: {
-          fontSize: fontSizes.FONT17,
-          lineHeight: Math.round(fontSizes.FONT17 * (24 / 17)),
+          fontSize: getFontSize(16),
+          lineHeight: getLineHeight(getFontSize(16)),
           fontWeight: "600",
-          fontVariationSettings: "'opsz' 17",
-          maxFontSize: fontSizes.FONT10,
      },
-
      title: {
-          fontSize: fontSizes.FONT25,
-          lineHeight: Math.round(fontSizes.FONT25 * (32 / 25)),
+          fontSize: getFontSize(24),
+          lineHeight: getLineHeight(getFontSize(24)),
           fontWeight: "500",
-          fontVariationSettings: "'opsz' 25",
-          maxFontSize: fontSizes.FONT10,
      },
-
      titleSecondary: {
-          fontSize: fontSizes.FONT28,
-          lineHeight: Math.round(fontSizes.FONT28 * (30 / 28)),
+          fontSize: getFontSize(22),
+          lineHeight: getLineHeight(getFontSize(22)),
           fontWeight: "400",
-          fontVariationSettings: "'opsz' 28",
-          maxFontSize: fontSizes.FONT10,
      },
-
      subTitleSecondary: {
-          fontSize: fontSizes.FONT22,
-          lineHeight: Math.round(fontSizes.FONT22 * (30 / 22)),
+          fontSize: getFontSize(20),
+          lineHeight: getLineHeight(getFontSize(20)),
           fontWeight: "400",
-          fontVariationSettings: "'opsz' 22",
-          maxFontSize: fontSizes.FONT10,
      },
-
      subtitle: {
-          fontSize: fontSizes.FONT20,
+          fontSize: getFontSize(18),
+          lineHeight: getLineHeight(getFontSize(18)),
           fontWeight: "500",
-          fontVariationSettings: "'opsz' 20",
-          maxFontSize: fontSizes.FONT10,
      },
-
      loginTitle: {
-          fontSize: fontSizes.FONT35,
+          fontSize: getFontSize(28),
+          lineHeight: getLineHeight(getFontSize(28)),
           fontWeight: "400",
-          fontVariationSettings: "'opsz' 35",
-          maxFontSize: fontSizes.FONT10,
+     },
+     link: {
+          fontSize: getFontSize(14),
+          lineHeight: getLineHeight(getFontSize(14)),
+          fontWeight: "500",
      },
 
-     link: {
-          fontSize: fontSizes.FONT16,
-          lineHeight: Math.round(fontSizes.FONT16 * (30 / 16)),
-          fontWeight: "500",
-          maxFontSize: fontSizes.FONT10,
+     // New Material Design-inspired text types
+     h1: {
+          fontSize: getFontSize(32),
+          lineHeight: getLineHeight(getFontSize(32)),
+          fontWeight: "600",
+          letterSpacing: -0.5,
      },
+     h2: {
+          fontSize: getFontSize(28),
+          lineHeight: getLineHeight(getFontSize(28)),
+          fontWeight: "600",
+          letterSpacing: -0.25,
+     },
+     h3: {
+          fontSize: getFontSize(24),
+          lineHeight: getLineHeight(getFontSize(24)),
+          fontWeight: "500",
+     },
+     h4: {
+          fontSize: getFontSize(20),
+          lineHeight: getLineHeight(getFontSize(20)),
+          fontWeight: "500",
+     },
+     body1: {
+          fontSize: getFontSize(16),
+          lineHeight: getLineHeight(getFontSize(16)),
+          fontWeight: "400",
+     },
+     body2: {
+          fontSize: getFontSize(14),
+          lineHeight: getLineHeight(getFontSize(14)),
+          fontWeight: "400",
+     },
+     caption: {
+          fontSize: getFontSize(12),
+          lineHeight: getLineHeight(getFontSize(12)),
+          fontWeight: "400",
+          letterSpacing: 0.4,
+     },
+     overline: {
+          fontSize: getFontSize(10),
+          lineHeight: getLineHeight(getFontSize(10)),
+          fontWeight: "500",
+          letterSpacing: 1.5,
+     },
+}
+
+/**
+ * Get typography style by type
+ */
+export const getTypography = (type: TextType): TypographyStyle => {
+     return typography[type]
+}
+
+/**
+ * Create custom typography style
+ */
+export const createTypographyStyle = (
+     fontSize: number,
+     fontWeight: TextStyle["fontWeight"] = "400",
+     letterSpacing?: number
+): TypographyStyle => {
+     return {
+          fontSize: getFontSize(fontSize),
+          lineHeight: getLineHeight(getFontSize(fontSize)),
+          fontWeight,
+          ...(letterSpacing !== undefined && { letterSpacing }),
+     }
 }

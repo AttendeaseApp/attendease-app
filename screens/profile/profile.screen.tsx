@@ -18,6 +18,7 @@ import { Button, ButtonText } from "@/components/ui/button"
 import { useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
 import AttendanceHistories from "@/components/profile/history/attendance.history.feed"
+import { normalize, spacing } from "@/themes/responsive"
 
 export default function ProfileScreen() {
      const [profile, setProfile] = useState<UserStudentResponse | null>(null)
@@ -99,7 +100,10 @@ export default function ProfileScreen() {
      if (loading) {
           return (
                <SafeAreaView style={styles.centerWrapper} edges={["top"]}>
-                    <ActivityIndicator size="large" color="#27548A" />
+                    <ActivityIndicator size="large" color="#000000" />
+                    <ThemedText type="default" style={{ marginTop: 12, opacity: 0.6 }}>
+                         LOADING PROFILE...
+                    </ThemedText>
                </SafeAreaView>
           )
      }
@@ -107,10 +111,10 @@ export default function ProfileScreen() {
      if (!profile) {
           return (
                <SafeAreaView style={styles.centerWrapper} edges={["top"]}>
-                    <ThemedText type="title">Failed to load profile.</ThemedText>
+                    <ThemedText type="title">FAILED TO LOAD YOUR PROFILE.</ThemedText>
                     <Button
                          action="primary"
-                         variant="solid"
+                         variant="outline"
                          size="md"
                          onPress={() => getUserProfileDataService(setProfile, setLoading)}
                          style={{ marginTop: 20 }}
@@ -308,6 +312,9 @@ const styles = StyleSheet.create({
           gap: 8,
      },
      infoText: {
+          fontSize: normalize(14),
+          lineHeight: normalize(12),
+          marginBottom: spacing.sm,
           color: "#6B7280",
      },
      actionButtons: {

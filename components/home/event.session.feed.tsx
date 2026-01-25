@@ -77,9 +77,9 @@ export default function EventSessionsFeed() {
      if (loadingEvents) {
           return (
                <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#27548A" />
+                    <ActivityIndicator size="large" color="#000000" />
                     <ThemedText type="default" style={{ marginTop: 12, opacity: 0.6 }}>
-                         Loading events...
+                         GETTING LATEST EVENTS...
                     </ThemedText>
                </View>
           )
@@ -88,10 +88,10 @@ export default function EventSessionsFeed() {
      const renderEmptyState = () => (
           <View style={styles.emptyStateContainer}>
                <View style={styles.emptyIconContainer}>
-                    <Ionicons name="sparkles-outline" size={64} color="#EEC170" />
+                    <Ionicons name="moon-outline" size={64} color="#1E2D2F" />
                </View>
                <ThemedText type="default" style={styles.emptyTitle}>
-                    There are no active events
+                    ~ NO EVENTS FOUND ~
                </ThemedText>
                <ThemedText type="default" style={styles.emptyDescription}>
                     There are no events scheduled at the moment. Check back later!

@@ -2,7 +2,7 @@ import { Button, ButtonSpinner, ButtonText } from "@/components/ui/button"
 import { ThemedTextInput } from "@/components/ui/input/themed.text.input"
 import { ThemedText } from "@/components/ui/text/themed.text"
 import { useLogin } from "@/hooks/login/useLogin"
-import { KeyboardAvoidingView, Platform, StyleSheet, View, Alert } from "react-native"
+import { KeyboardAvoidingView, Platform, StyleSheet, View, Alert, StatusBar } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useEffect } from "react"
 
@@ -32,7 +32,8 @@ export default function LoginScreen() {
      }, [alertOpen, alertMessage, alertTitle, setAlertOpen])
 
      return (
-          <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+          <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }} edges={["top", "bottom"]}>
+               <StatusBar barStyle={"dark-content"} />
                <KeyboardAvoidingView
                     style={loginStyles.background}
                     behavior={Platform.OS === "ios" ? "padding" : "height"}

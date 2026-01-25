@@ -18,7 +18,13 @@
           "android": {
                "icon": "./assets/images/icon.png",
                "edgeToEdgeEnabled": true,
-               "permissions": ["android.permission.CAMERA", "android.permission.RECORD_AUDIO"],
+               "permissions": [
+                    "android.permission.CAMERA",
+                    "android.permission.RECORD_AUDIO",
+                    "ACCESS_FINE_LOCATION",
+                    "ACCESS_COARSE_LOCATION",
+                    "ACCESS_BACKGROUND_LOCATION"
+               ],
                "softwareKeyboardLayoutMode": "pan",
                "package": "com.attendease.app"
           },
@@ -32,6 +38,16 @@
           },
           "plugins": [
                "expo-router",
+               [
+                    "expo-location",
+                    {
+                         "isAndroidForegroundServiceEnabled": true,
+                         "foregroundService": {
+                              "notificationTitle": "Attendease is running",
+                              "notificationBody": "Location is being tracked for attendance verification"
+                         }
+                    }
+               ],
                [
                     "expo-splash-screen",
                     {

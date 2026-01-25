@@ -331,7 +331,7 @@ export default function OneTimeFacialRegistrationScreen() {
                                    <View
                                         style={{
                                              height: "100%",
-                                             backgroundColor: "#4ade80",
+                                             backgroundColor: "#d97757",
                                              width: `${progressPercentage}%`,
                                         }}
                                    />
@@ -351,17 +351,17 @@ export default function OneTimeFacialRegistrationScreen() {
                                              index < capturedImages.length &&
                                                   registrationScreenStyles.progressDotActive,
                                              {
-                                                  width: index < capturedImages.length ? 32 : 12,
+                                                  width: index < capturedImages.length ? 12 : 12,
                                                   backgroundColor:
                                                        index < capturedImages.length
-                                                            ? "#4ade80"
+                                                            ? "#d97757"
                                                             : "rgba(255,255,255,0.3)",
                                              },
                                         ]}
                                    >
-                                        {index < capturedImages.length && (
+                                        {/*{index < capturedImages.length && (
                                              <Ionicons name="checkmark" size={14} color="#fff" />
-                                        )}
+                                        )}*/}
                                    </View>
                               ))}
                          </View>
@@ -404,7 +404,7 @@ export default function OneTimeFacialRegistrationScreen() {
                          </Button>
                     </View>
 
-                    <View style={{ marginTop: 12, alignItems: "center" }}>
+                    <View style={{ marginTop: 12 }}>
                          <Button
                               action="primary"
                               variant="outline"

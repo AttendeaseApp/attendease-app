@@ -6,6 +6,7 @@ import React, { useRef, useState } from "react"
 import { ActivityIndicator, Alert, View } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import facialVerificationScreenStyles from "./facial.verification.screen.styles"
+import { SafeAreaView } from "react-native-safe-area-context"
 
 export default function EventRegistrationFacialVerificationScreen() {
      const cameraRef = useRef<CameraView>(null)
@@ -54,164 +55,171 @@ export default function EventRegistrationFacialVerificationScreen() {
 
      if (permission === null) {
           return (
-               <View style={facialVerificationScreenStyles.center}>
-                    <ActivityIndicator size="large" />
-                    <ThemedText type="default" style={{ marginTop: 16 }}>
-                         Requesting camera permission...
-                    </ThemedText>
-               </View>
+               <SafeAreaView edges={["top", "bottom"]}>
+                    <View style={facialVerificationScreenStyles.center}>
+                         <ActivityIndicator size="large" />
+                         <ThemedText type="default" style={{ marginTop: 16 }}>
+                              Requesting camera permission...
+                         </ThemedText>
+                    </View>
+               </SafeAreaView>
           )
      }
 
      if (!permission.granted) {
           return (
-               <View style={facialVerificationScreenStyles.center}>
-                    <Ionicons
-                         name="camera-outline"
-                         size={64}
-                         color="#666"
-                         style={{ marginBottom: 16 }}
-                    />
-                    <ThemedText
-                         type="title"
-                         style={[
-                              facialVerificationScreenStyles.permissionText,
-                              { marginBottom: 8 },
-                         ]}
-                    >
-                         Camera Access Required
-                    </ThemedText>
-                    <ThemedText
-                         type="default"
-                         style={[
-                              facialVerificationScreenStyles.permissionText,
-                              { fontSize: 14, opacity: 0.7, marginBottom: 20 },
-                         ]}
-                    >
-                         Camera access is required to verify your identity for secure event
-                         registration.
-                    </ThemedText>
-                    <Button action="primary" variant="outline" onPress={requestPermission}>
-                         <ButtonText>Grant Camera Permission</ButtonText>
-                    </Button>
-               </View>
+               <SafeAreaView edges={["top", "bottom"]}>
+                    <View style={facialVerificationScreenStyles.center}>
+                         <Ionicons
+                              name="camera-outline"
+                              size={64}
+                              color="#666"
+                              style={{ marginBottom: 16 }}
+                         />
+                         <ThemedText
+                              type="title"
+                              style={[
+                                   facialVerificationScreenStyles.permissionText,
+                                   { marginBottom: 8 },
+                              ]}
+                         >
+                              Camera Access Required
+                         </ThemedText>
+                         <ThemedText
+                              type="default"
+                              style={[
+                                   facialVerificationScreenStyles.permissionText,
+                                   { fontSize: 14, opacity: 0.7, marginBottom: 20 },
+                              ]}
+                         >
+                              Camera access is required to verify your identity for secure event
+                              registration.
+                         </ThemedText>
+                         <Button action="primary" variant="outline" onPress={requestPermission}>
+                              <ButtonText>Grant Camera Permission</ButtonText>
+                         </Button>
+                    </View>
+               </SafeAreaView>
           )
      }
 
      return (
-          <View style={facialVerificationScreenStyles.container}>
-               <CameraView
-                    ref={cameraRef}
-                    style={facialVerificationScreenStyles.camera}
-                    facing="front"
-               >
-                    <View style={facialVerificationScreenStyles.overlay}>
-                         <View style={facialVerificationScreenStyles.instructionBox}>
-                              <View
-                                   style={{
-                                        flexDirection: "row",
-                                        alignItems: "center",
-                                        marginBottom: 8,
-                                   }}
-                              >
-                                   <Ionicons
-                                        name="shield-checkmark"
-                                        size={20}
-                                        color="#fff"
-                                        style={{ marginRight: 8 }}
-                                   />
-                                   <ThemedText
-                                        type="default"
-                                        colorVariant="white"
-                                        style={{ fontSize: 12, opacity: 0.9 }}
+          <SafeAreaView edges={["top", "bottom"]}>
+               <View style={facialVerificationScreenStyles.container}>
+                    <CameraView
+                         ref={cameraRef}
+                         style={facialVerificationScreenStyles.camera}
+                         facing="front"
+                    >
+                         <View style={facialVerificationScreenStyles.overlay}>
+                              <View style={facialVerificationScreenStyles.instructionBox}>
+                                   <View
+                                        style={{
+                                             flexDirection: "row",
+                                             alignItems: "center",
+                                             marginBottom: 8,
+                                        }}
                                    >
-                                        Identity Verification
-                                   </ThemedText>
-                              </View>
-                              <ThemedText
-                                   type="defaultSemiBold"
-                                   colorVariant="white"
-                                   style={{ fontSize: 16 }}
-                              >
-                                   Align your face inside the frame and tap to capture your photo
-                                   for verification.
-                              </ThemedText>
-                         </View>
-
-                         <View style={facialVerificationScreenStyles.faceFrameContainer}>
-                              <View style={facialVerificationScreenStyles.faceFrame} />
-                         </View>
-
-                         <View style={facialVerificationScreenStyles.controls}>
-                              {loading ? (
-                                   <View style={{ alignItems: "center", gap: 12 }}>
-                                        <ActivityIndicator size="large" color="#0D9488" />
+                                        <Ionicons
+                                             name="shield-checkmark"
+                                             size={20}
+                                             color="#fff"
+                                             style={{ marginRight: 8 }}
+                                        />
                                         <ThemedText
                                              type="default"
-                                             style={{ color: "#0D9488", fontWeight: "600" }}
+                                             colorVariant="white"
+                                             style={{ fontSize: 12, opacity: 0.9 }}
                                         >
-                                             Processing image...
+                                             Identity Verification
                                         </ThemedText>
                                    </View>
-                              ) : (
-                                   <>
-                                        <Button
-                                             action="primary"
-                                             variant="solid"
-                                             size="lg"
-                                             onPress={captureAndNavigateBack}
-                                             style={{ width: "100%" }}
-                                        >
-                                             <Ionicons
-                                                  name="camera"
-                                                  size={20}
-                                                  color="#fff"
-                                                  style={{ marginRight: 8 }}
-                                             />
-                                             <ButtonText>Capture & Verify</ButtonText>
-                                        </Button>
+                                   <ThemedText
+                                        type="defaultSemiBold"
+                                        colorVariant="white"
+                                        style={{ fontSize: 16 }}
+                                   >
+                                        Align your face inside the frame and tap to capture your
+                                        photo for verification.
+                                   </ThemedText>
+                              </View>
 
-                                        <Button
-                                             action="secondary"
-                                             variant="outline"
-                                             size="md"
-                                             onPress={() => router.back()}
-                                             style={{ width: "100%", marginTop: 12 }}
-                                        >
-                                             <ButtonText>Cancel</ButtonText>
-                                        </Button>
+                              <View style={facialVerificationScreenStyles.faceFrameContainer}>
+                                   <View style={facialVerificationScreenStyles.faceFrame} />
+                              </View>
 
-                                        <View
-                                             style={{
-                                                  flexDirection: "row",
-                                                  alignItems: "flex-start",
-                                                  marginTop: 12,
-                                             }}
-                                        >
-                                             <Ionicons
-                                                  name="information-circle-outline"
-                                                  size={16}
-                                                  color="#666"
-                                                  style={{ marginRight: 8, marginTop: 2 }}
-                                             />
+                              <View style={facialVerificationScreenStyles.controls}>
+                                   {loading ? (
+                                        <View style={{ alignItems: "center", gap: 12 }}>
+                                             <ActivityIndicator size="large" color="#0D9488" />
                                              <ThemedText
                                                   type="default"
-                                                  style={{
-                                                       flex: 1,
-                                                       fontSize: 13,
-                                                       lineHeight: 18,
-                                                       opacity: 0.7,
-                                                  }}
+                                                  style={{ color: "#0D9488", fontWeight: "600" }}
                                              >
-                                                  Your face will be verified against your registered
-                                                  biometric data for secure event check-in.
+                                                  Processing image...
                                              </ThemedText>
                                         </View>
-                                   </>
-                              )}
+                                   ) : (
+                                        <>
+                                             <Button
+                                                  action="primary"
+                                                  variant="solid"
+                                                  size="lg"
+                                                  onPress={captureAndNavigateBack}
+                                                  style={{ width: "100%" }}
+                                             >
+                                                  <Ionicons
+                                                       name="camera"
+                                                       size={20}
+                                                       color="#fff"
+                                                       style={{ marginRight: 8 }}
+                                                  />
+                                                  <ButtonText>Capture & Verify</ButtonText>
+                                             </Button>
+
+                                             <Button
+                                                  action="secondary"
+                                                  variant="outline"
+                                                  size="md"
+                                                  onPress={() => router.back()}
+                                                  style={{ width: "100%", marginTop: 12 }}
+                                             >
+                                                  <ButtonText>Cancel</ButtonText>
+                                             </Button>
+
+                                             <View
+                                                  style={{
+                                                       flexDirection: "row",
+                                                       alignItems: "flex-start",
+                                                       marginTop: 12,
+                                                  }}
+                                             >
+                                                  <Ionicons
+                                                       name="information-circle-outline"
+                                                       size={16}
+                                                       color="#666"
+                                                       style={{ marginRight: 8, marginTop: 2 }}
+                                                  />
+                                                  <ThemedText
+                                                       type="default"
+                                                       style={{
+                                                            flex: 1,
+                                                            fontSize: 13,
+                                                            lineHeight: 18,
+                                                            opacity: 0.7,
+                                                       }}
+                                                  >
+                                                       Your face will be verified against your
+                                                       registered biometric data for secure event
+                                                       check-in.
+                                                  </ThemedText>
+                                             </View>
+                                        </>
+                                   )}
+                              </View>
                          </View>
-                    </View>
-               </CameraView>
-          </View>
+                    </CameraView>
+               </View>
+          </SafeAreaView>
      )
 }
