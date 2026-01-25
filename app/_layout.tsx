@@ -8,6 +8,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage"
 import { jwtDecode } from "jwt-decode"
 import { DecodedToken } from "@/domain/interface/token/token"
 import { startAttendanceTracking } from "@/utils/attendance/tracking/attendance-tracking-manager"
+import { getAuthToken, clearAuthToken } from "@/server/utils/token-cache"
 import "@/global.css"
 
 SplashScreen.preventAutoHideAsync()
@@ -120,7 +121,7 @@ function RootLayoutNav() {
 
      const checkAuthStatus = async () => {
           try {
-               const token = await AsyncStorage.getItem("authToken")
+               const token = await getAuthToken()
                if (!token) {
                     setAuthState({
                          isLoggedIn: false,
@@ -133,8 +134,8 @@ function RootLayoutNav() {
                const decoded: DecodedToken = jwtDecode(token)
                const currentTime = Date.now() / 1000
                if (decoded.exp < currentTime) {
+                    await clearAuthToken()
                     await AsyncStorage.multiRemove([
-                         "authToken",
                          "facialRegistrationComplete",
                          "studentNumber",
                          "skippedFacialRegistration",
@@ -156,8 +157,8 @@ function RootLayoutNav() {
                SplashScreen.hideAsync()
           } catch (error) {
                console.error("Auth check error:", error)
+               await clearAuthToken()
                await AsyncStorage.multiRemove([
-                    "authToken",
                     "facialRegistrationComplete",
                     "studentNumber",
                     "skippedFacialRegistration",
