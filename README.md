@@ -1,6 +1,6 @@
-# RCIANS ATTENDEASE Mobile Application
+## RCians Attendease: Mobile
 
-## OVERVIEW
+### Project Overview
 
 RCIANS ATTENDEASE is a comprehensive mobile for convenient
 event tracking and attendance verification for the students of Rogationist College - College Department.
@@ -13,17 +13,17 @@ The application requires the following device permissions to function properly:
 - **Location Services** - For attendance location monitoring and verification
 - **Internet Connection** - For real-time event updates and data synchronization
 
-## SUPPORTED PLATFORMS
+### Supported Platforms
 
 - iOS
 - Android
 
-## CORE FEATURES
+### Core Features
 
 - **Facial Verification** - Biometric attendance verification
 - **Location Monitoring** - GPS-based attendance validation
 
-## BUILT WITH
+### Built With
 
 - **React Native** - Cross-platform mobile framework
 - **Expo** - Development and build toolchain
